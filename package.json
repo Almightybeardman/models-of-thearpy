@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "node -e \"console.log('Static app: no build step')\"",
+    "build": "node scripts/build-static.js",
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy"
   },

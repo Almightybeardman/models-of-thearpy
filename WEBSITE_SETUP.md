@@ -38,7 +38,7 @@ Recommended Vercel settings:
 
 - Framework preset: Other
 - Build command: `npx convex deploy --cmd "npm run build"`
-- Output directory: leave blank/default
+- Output directory: `public` (already configured in `vercel.json`)
 - Environment variable: `CONVEX_DEPLOY_KEY`
 
 Get `CONVEX_DEPLOY_KEY` from the Convex dashboard production deployment settings.

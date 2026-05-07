@@ -13,6 +13,14 @@ Offline-first study app for Bowen Family Systems Therapy, EFT, LMFT/systemic rol
 
 Open `index.html` in Chrome, Edge, Safari, or Firefox. No install is required unless you want to deploy Convex.
 
+## Build Static Files
+
+Vercel serves the generated `public` folder. To build it locally:
+
+```sh
+npm run build
+```
+
 ## Make It A Website
 
 This version is ready for Vercel plus Convex:
@@ -58,4 +66,6 @@ For automatic Convex deployment from Vercel, set the Vercel build command to:
 npx convex deploy --cmd "npm run build"
 ```
 
-Then set `CONVEX_DEPLOY_KEY` in Vercel environment variables. The frontend is static, so `npm run build` is intentionally a no-op.
+Then set `CONVEX_DEPLOY_KEY` in Vercel environment variables. The frontend is static, so `npm run build` only prepares the deploy folder.
+
+The repository includes `vercel.json` with `outputDirectory` set to `public`, and `npm run build` copies `index.html` plus `assets/` into that folder.
