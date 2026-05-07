@@ -8,6 +8,7 @@
   var THEME_KEY = "therapyStudyTheme:v1";
   var ACCENT_KEY = "therapyStudyAccent:v1";
   var SYNC_CODE_KEY = "therapyStudySyncCode:v1";
+  var FEEDBACK_ADMIN_TOKEN_KEY = "therapyStudyFeedbackAdminToken:v1";
   var REVIEW_INTERVAL_DAYS = [0, 1, 3, 7];
 
   var state = {
@@ -21,7 +22,14 @@
     syncMessage: "",
     syncStatus: "idle",
     syncTimer: null,
-    applyingSync: false
+    applyingSync: false,
+    feedbackItems: [],
+    feedbackMessage: "",
+    feedbackStatus: "idle",
+    feedbackAdminToken: "",
+    feedbackAdminMessage: "",
+    feedbackAdminStatus: "idle",
+    feedbackAdminLoading: false
   };
 
   var els = {};
@@ -33,6 +41,7 @@
     setupNavigation();
     loadProfiles();
     loadTheme();
+    loadFeedbackAdmin();
     populateFilters();
     bindForms();
     renderAll();
@@ -80,6 +89,21 @@
     els.masteryDashboard = document.getElementById("masteryDashboard");
     els.resetProfile = document.getElementById("resetProfile");
     els.practiceWeakNow = document.getElementById("practiceWeakNow");
+    els.feedbackForm = document.getElementById("feedbackForm");
+    els.feedbackType = document.getElementById("feedbackType");
+    els.feedbackTitleInput = document.getElementById("feedbackTitleInput");
+    els.feedbackDetails = document.getElementById("feedbackDetails");
+    els.feedbackContact = document.getElementById("feedbackContact");
+    els.feedbackPage = document.getElementById("feedbackPage");
+    els.feedbackStatus = document.getElementById("feedbackStatus");
+    els.feedbackAdminLogin = document.getElementById("feedbackAdminLogin");
+    els.feedbackAdminPassword = document.getElementById("feedbackAdminPassword");
+    els.feedbackAdminStatus = document.getElementById("feedbackAdminStatus");
+    els.feedbackAdminPanel = document.getElementById("feedbackAdminPanel");
+    els.feedbackAdminFilter = document.getElementById("feedbackAdminFilter");
+    els.feedbackAdminRefresh = document.getElementById("feedbackAdminRefresh");
+    els.feedbackAdminLogout = document.getElementById("feedbackAdminLogout");
+    els.feedbackAdminList = document.getElementById("feedbackAdminList");
   }
 
   function setupNavigation() {
@@ -106,6 +130,12 @@
     var shell = document.querySelector(".app-shell");
     if (shell) {
       shell.classList.toggle("is-guide-wide", viewId === "guide");
+    }
+    if (viewId === "feedback") {
+      renderFeedback();
+      if (state.feedbackAdminToken && state.feedbackItems.length === 0 && !state.feedbackAdminLoading) {
+        loadFeedbackItems();
+      }
     }
   }
 
@@ -210,6 +240,22 @@
     els.resetProfile.addEventListener("click", function () {
       clearActiveProfile();
     });
+
+    if (els.feedbackForm) {
+      els.feedbackForm.addEventListener("submit", submitFeedbackRequest);
+    }
+    if (els.feedbackAdminLogin) {
+      els.feedbackAdminLogin.addEventListener("submit", loginFeedbackAdmin);
+    }
+    if (els.feedbackAdminFilter) {
+      els.feedbackAdminFilter.addEventListener("change", loadFeedbackItems);
+    }
+    if (els.feedbackAdminRefresh) {
+      els.feedbackAdminRefresh.addEventListener("click", loadFeedbackItems);
+    }
+    if (els.feedbackAdminLogout) {
+      els.feedbackAdminLogout.addEventListener("click", logoutFeedbackAdmin);
+    }
   }
 
   function populateFilters() {
@@ -366,6 +412,7 @@
     renderScenarioLibrary();
     renderSkillPlaceholder();
     renderSyncPanel();
+    renderFeedback();
     renderProgress();
   }
 
@@ -1124,6 +1171,288 @@
       state.syncMessage = "Cloud restore failed: " + error.message;
     }
     renderAll();
+  }
+
+  function loadFeedbackAdmin() {
+    state.feedbackAdminToken = safeStorage.getItem(FEEDBACK_ADMIN_TOKEN_KEY) || "";
+  }
+
+  function isFeedbackConfigured() {
+    var feedback = window.STUDY_FEEDBACK;
+    return Boolean(feedback && feedback.isConfigured && feedback.isConfigured());
+  }
+
+  function renderFeedback() {
+    if (!els.feedbackStatus) return;
+    if (els.feedbackPage && !els.feedbackPage.value) {
+      els.feedbackPage.placeholder = currentFeedbackLocation();
+    }
+    if (!isFeedbackConfigured()) {
+      state.feedbackStatus = "error";
+      state.feedbackMessage = "Request inbox needs Convex configured before submissions can be saved.";
+    } else if (state.feedbackStatus === "idle") {
+      state.feedbackMessage = "";
+    }
+    renderFeedbackMessage(els.feedbackStatus, state.feedbackStatus, state.feedbackMessage);
+    renderFeedbackAdmin();
+  }
+
+  function renderFeedbackAdmin() {
+    if (!els.feedbackAdminPanel) return;
+    var loggedIn = Boolean(state.feedbackAdminToken);
+    if (els.feedbackAdminLogin) els.feedbackAdminLogin.hidden = loggedIn;
+    els.feedbackAdminPanel.hidden = !loggedIn;
+
+    if (!isFeedbackConfigured()) {
+      state.feedbackAdminStatus = "error";
+      state.feedbackAdminMessage = "Admin inbox needs Convex configured.";
+    } else if (!loggedIn && state.feedbackAdminStatus === "idle") {
+      state.feedbackAdminMessage = "";
+    }
+
+    renderFeedbackMessage(els.feedbackAdminStatus, state.feedbackAdminStatus, state.feedbackAdminMessage);
+    if (loggedIn) {
+      renderFeedbackItems();
+    }
+  }
+
+  function renderFeedbackMessage(node, status, message) {
+    if (!node) return;
+    node.className = "feedback-status" + (status && status !== "idle" ? " " + status : "");
+    node.textContent = message || "";
+  }
+
+  async function submitFeedbackRequest(event) {
+    event.preventDefault();
+    var feedback = window.STUDY_FEEDBACK;
+    if (!feedback || !feedback.submit || !isFeedbackConfigured()) {
+      state.feedbackStatus = "error";
+      state.feedbackMessage = "Request inbox is not connected yet.";
+      renderFeedback();
+      return;
+    }
+
+    var title = (els.feedbackTitleInput.value || "").trim();
+    var details = (els.feedbackDetails.value || "").trim();
+    if (title.length < 4 || details.length < 10) {
+      state.feedbackStatus = "error";
+      state.feedbackMessage = "Add a short title and at least one clear sentence of details.";
+      renderFeedback();
+      return;
+    }
+
+    var button = els.feedbackForm.querySelector("button[type='submit']");
+    if (button) button.disabled = true;
+    state.feedbackStatus = "syncing";
+    state.feedbackMessage = "Submitting request...";
+    renderFeedback();
+
+    try {
+      await feedback.submit({
+        type: els.feedbackType.value || "bug",
+        title: title,
+        details: details,
+        contact: (els.feedbackContact.value || "").trim(),
+        pageUrl: (els.feedbackPage.value || "").trim() || currentFeedbackLocation(),
+        userAgent: window.navigator ? window.navigator.userAgent : ""
+      });
+      state.feedbackStatus = "synced";
+      state.feedbackMessage = "Request submitted. Thank you.";
+      els.feedbackTitleInput.value = "";
+      els.feedbackDetails.value = "";
+      els.feedbackPage.value = "";
+    } catch (error) {
+      state.feedbackStatus = "error";
+      state.feedbackMessage = error.message || "Could not submit request.";
+    }
+
+    if (button) button.disabled = false;
+    renderFeedback();
+  }
+
+  async function loginFeedbackAdmin(event) {
+    event.preventDefault();
+    var feedback = window.STUDY_FEEDBACK;
+    if (!feedback || !feedback.adminLogin || !isFeedbackConfigured()) {
+      state.feedbackAdminStatus = "error";
+      state.feedbackAdminMessage = "Admin inbox is not connected yet.";
+      renderFeedbackAdmin();
+      return;
+    }
+
+    var password = (els.feedbackAdminPassword.value || "").trim();
+    if (!password) {
+      state.feedbackAdminStatus = "error";
+      state.feedbackAdminMessage = "Enter the admin password.";
+      renderFeedbackAdmin();
+      return;
+    }
+
+    state.feedbackAdminStatus = "syncing";
+    state.feedbackAdminMessage = "Logging in...";
+    renderFeedbackAdmin();
+
+    try {
+      var result = await feedback.adminLogin(password);
+      state.feedbackAdminToken = result.token || "";
+      safeStorage.setItem(FEEDBACK_ADMIN_TOKEN_KEY, state.feedbackAdminToken);
+      els.feedbackAdminPassword.value = "";
+      state.feedbackAdminStatus = "synced";
+      state.feedbackAdminMessage = "Logged in.";
+      await loadFeedbackItems();
+    } catch (error) {
+      state.feedbackAdminStatus = "error";
+      state.feedbackAdminMessage = error.message || "Could not log in.";
+      renderFeedbackAdmin();
+    }
+  }
+
+  function logoutFeedbackAdmin() {
+    state.feedbackAdminToken = "";
+    state.feedbackItems = [];
+    state.feedbackAdminStatus = "idle";
+    state.feedbackAdminMessage = "";
+    safeStorage.setItem(FEEDBACK_ADMIN_TOKEN_KEY, "");
+    renderFeedbackAdmin();
+  }
+
+  async function loadFeedbackItems() {
+    var feedback = window.STUDY_FEEDBACK;
+    if (!state.feedbackAdminToken || !feedback || !feedback.adminList || !isFeedbackConfigured()) {
+      return;
+    }
+
+    state.feedbackAdminLoading = true;
+    state.feedbackAdminStatus = "syncing";
+    state.feedbackAdminMessage = "Loading requests...";
+    renderFeedbackAdmin();
+
+    try {
+      var status = els.feedbackAdminFilter ? els.feedbackAdminFilter.value : "all";
+      var result = await feedback.adminList(state.feedbackAdminToken, status);
+      state.feedbackItems = Array.isArray(result.items) ? result.items : [];
+      state.feedbackAdminStatus = "synced";
+      state.feedbackAdminMessage = state.feedbackItems.length + " request" + (state.feedbackItems.length === 1 ? "" : "s") + " loaded.";
+    } catch (error) {
+      state.feedbackItems = [];
+      state.feedbackAdminStatus = "error";
+      state.feedbackAdminMessage = error.message || "Could not load requests.";
+      if (/session|log in/i.test(state.feedbackAdminMessage)) {
+        state.feedbackAdminToken = "";
+        safeStorage.setItem(FEEDBACK_ADMIN_TOKEN_KEY, "");
+      }
+    }
+
+    state.feedbackAdminLoading = false;
+    renderFeedbackAdmin();
+  }
+
+  function renderFeedbackItems() {
+    if (!els.feedbackAdminList) return;
+    if (state.feedbackAdminLoading) {
+      els.feedbackAdminList.innerHTML = "<div class=\"empty-state\">Loading requests...</div>";
+      return;
+    }
+    if (!state.feedbackItems.length) {
+      els.feedbackAdminList.innerHTML = "<div class=\"empty-state\">No requests match this filter.</div>";
+      return;
+    }
+
+    els.feedbackAdminList.innerHTML = state.feedbackItems.map(renderFeedbackItem).join("");
+    els.feedbackAdminList.querySelectorAll("[data-feedback-save]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        saveFeedbackItem(button);
+      });
+    });
+  }
+
+  function renderFeedbackItem(item) {
+    var id = item._id || item.id || "";
+    var contact = item.contact ? "<div><strong>Contact</strong><span>" + escapeHtml(item.contact) + "</span></div>" : "";
+    var page = item.pageUrl ? "<div><strong>Page</strong><span>" + escapeHtml(item.pageUrl) + "</span></div>" : "";
+    var browser = item.userAgent ? "<details><summary>Browser</summary><p>" + escapeHtml(item.userAgent) + "</p></details>" : "";
+
+    return [
+      "<article class=\"feedback-item\" data-feedback-id=\"" + escapeHtml(id) + "\">",
+      "<div class=\"feedback-item-head\">",
+      "<div>",
+      "<div class=\"skill-meta\"><span class=\"tag\">" + escapeHtml(item.type === "feature" ? "Feature" : "Bug") + "</span><span class=\"tag\">" + escapeHtml(statusLabel(item.status)) + "</span></div>",
+      "<h3>" + escapeHtml(item.title || "Untitled request") + "</h3>",
+      "<p>" + escapeHtml(formatDateTime(item.createdAt)) + "</p>",
+      "</div>",
+      "<label>Status<select data-feedback-status>" + feedbackStatusOptions(item.status) + "</select></label>",
+      "</div>",
+      "<p class=\"feedback-details\">" + escapeHtml(item.details || "") + "</p>",
+      contact || page ? "<div class=\"feedback-meta-grid\">" + contact + page + "</div>" : "",
+      browser,
+      "<label>Admin note<textarea data-feedback-note placeholder=\"Private note for this request\">" + escapeHtml(item.adminNote || "") + "</textarea></label>",
+      "<div class=\"button-row\"><button class=\"secondary\" type=\"button\" data-feedback-save>Save</button></div>",
+      "</article>"
+    ].join("");
+  }
+
+  function feedbackStatusOptions(selected) {
+    return ["new", "reviewing", "planned", "done", "closed"].map(function (status) {
+      return "<option value=\"" + status + "\"" + (status === selected ? " selected" : "") + ">" + escapeHtml(statusLabel(status)) + "</option>";
+    }).join("");
+  }
+
+  async function saveFeedbackItem(button) {
+    var feedback = window.STUDY_FEEDBACK;
+    var itemNode = button.closest("[data-feedback-id]");
+    if (!feedback || !feedback.adminUpdate || !itemNode || !state.feedbackAdminToken) return;
+
+    var id = itemNode.getAttribute("data-feedback-id");
+    var statusNode = itemNode.querySelector("[data-feedback-status]");
+    var noteNode = itemNode.querySelector("[data-feedback-note]");
+    button.disabled = true;
+    state.feedbackAdminStatus = "syncing";
+    state.feedbackAdminMessage = "Saving request...";
+    renderFeedbackMessage(els.feedbackAdminStatus, state.feedbackAdminStatus, state.feedbackAdminMessage);
+
+    try {
+      await feedback.adminUpdate(state.feedbackAdminToken, id, {
+        status: statusNode ? statusNode.value : "new",
+        adminNote: noteNode ? noteNode.value : ""
+      });
+      state.feedbackAdminStatus = "synced";
+      state.feedbackAdminMessage = "Request saved.";
+      await loadFeedbackItems();
+    } catch (error) {
+      state.feedbackAdminStatus = "error";
+      state.feedbackAdminMessage = error.message || "Could not save request.";
+      button.disabled = false;
+      renderFeedbackAdmin();
+    }
+  }
+
+  function currentFeedbackLocation() {
+    var active = document.querySelector(".view.is-active");
+    return (active && active.id ? active.id : "app") + " / " + window.location.href.split("#")[0];
+  }
+
+  function statusLabel(status) {
+    var labels = {
+      new: "New",
+      reviewing: "Reviewing",
+      planned: "Planned",
+      done: "Done",
+      closed: "Closed"
+    };
+    return labels[status] || "New";
+  }
+
+  function formatDateTime(value) {
+    if (!value) return "";
+    var date = typeof value === "number" ? new Date(value) : new Date(String(value));
+    if (isNaN(date.getTime())) return String(value);
+    return date.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    });
   }
 
   function generateShareCode() {

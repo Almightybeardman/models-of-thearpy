@@ -92,6 +92,7 @@
         <button type="button" data-view-button="quiz">Questionnaire</button>
         <button type="button" data-view-button="scenarios">Real Life Examples</button>
         <button type="button" data-view-button="skill">Skill Lab</button>
+        <button type="button" data-view-button="feedback">Bug Reports / Feature Requests</button>
         <button type="button" data-view-button="progress">Progress</button>
       </nav>
 
@@ -278,6 +279,78 @@
             <aside class="panel scenario-notes">
               <h3>Skill Score</h3>
               <div id="skillScore"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" id="feedback" aria-labelledby="feedbackTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Requests</p>
+              <h2 id="feedbackTitle">Bug Reports / Feature Requests</h2>
+            </div>
+            <p class="fine-print">Send broken behavior, confusing content, or useful additions. Admin access is private.</p>
+          </div>
+
+          <div class="feedback-layout">
+            <section class="practice-card">
+              <h3>Send a request</h3>
+              <form class="feedback-form" id="feedbackForm">
+                <div class="feedback-grid">
+                  <label for="feedbackType">Type
+                    <select id="feedbackType">
+                      <option value="bug">Bug report</option>
+                      <option value="feature">Feature request</option>
+                    </select>
+                  </label>
+                  <label for="feedbackTitleInput">Title
+                    <input id="feedbackTitleInput" type="text" maxlength="120" required placeholder="Short summary">
+                  </label>
+                  <label for="feedbackContact">Contact
+                    <input id="feedbackContact" type="text" maxlength="140" placeholder="Optional email or name">
+                  </label>
+                  <label for="feedbackPage">Page
+                    <input id="feedbackPage" type="text" maxlength="300" placeholder="Optional page or tab">
+                  </label>
+                </div>
+                <label for="feedbackDetails">Details
+                  <textarea id="feedbackDetails" maxlength="2000" required placeholder="What happened, what you expected, or what would help?"></textarea>
+                </label>
+                <div class="button-row">
+                  <button type="submit">Submit Request</button>
+                </div>
+                <div id="feedbackStatus" class="feedback-status" aria-live="polite"></div>
+              </form>
+            </section>
+
+            <aside class="panel feedback-admin">
+              <h3>Admin</h3>
+              <form class="feedback-admin-login" id="feedbackAdminLogin">
+                <label for="feedbackAdminPassword">Password
+                  <input id="feedbackAdminPassword" type="password" autocomplete="current-password" placeholder="Admin password">
+                </label>
+                <button type="submit">Log In</button>
+              </form>
+              <div id="feedbackAdminStatus" class="feedback-status" aria-live="polite"></div>
+              <div id="feedbackAdminPanel" hidden>
+                <div class="feedback-admin-tools">
+                  <label for="feedbackAdminFilter">Status
+                    <select id="feedbackAdminFilter">
+                      <option value="all">All</option>
+                      <option value="new">New</option>
+                      <option value="reviewing">Reviewing</option>
+                      <option value="planned">Planned</option>
+                      <option value="done">Done</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                  </label>
+                  <div class="button-row">
+                    <button class="secondary" type="button" id="feedbackAdminRefresh">Refresh</button>
+                    <button class="secondary" type="button" id="feedbackAdminLogout">Log Out</button>
+                  </div>
+                </div>
+                <div id="feedbackAdminList" class="feedback-list"></div>
+              </div>
             </aside>
           </div>
         </section>

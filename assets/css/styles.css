@@ -486,6 +486,10 @@ body {
   letter-spacing: 0;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 button,
 input,
 select,
@@ -842,7 +846,8 @@ html[data-tone="dark"] .view-tabs button:not(.is-active):focus-visible {
 
 .dashboard-layout,
 .scenario-layout,
-.skill-layout {
+.skill-layout,
+.feedback-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 0.48fr);
   gap: 14px;
@@ -1923,6 +1928,10 @@ th {
     .sync-grid,
     .scenario-layout,
     .skill-layout,
+    .feedback-layout,
+    .feedback-grid,
+    .feedback-meta-grid,
+    .feedback-item-head,
     .skill-field-grid,
     .model-compare-grid,
     .flag-list {
@@ -2274,7 +2283,8 @@ html[data-tone="dark"] .view-tabs button:not(.is-active):focus-visible {
 
 .dashboard-layout,
 .scenario-layout,
-.skill-layout {
+.skill-layout,
+.feedback-layout {
   grid-template-columns: minmax(0, 1fr) minmax(320px, 0.48fr);
   gap: 12px;
 }
@@ -2526,6 +2536,104 @@ html[data-tone="dark"] .term {
   gap: 10px;
 }
 
+.feedback-layout {
+  align-items: start;
+}
+
+.feedback-form,
+.feedback-admin-login,
+.feedback-admin-tools,
+.feedback-list {
+  display: grid;
+  gap: 12px;
+  padding-left: 0;
+}
+
+.feedback-grid,
+.feedback-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.feedback-status {
+  min-height: 22px;
+  color: var(--muted);
+}
+
+.feedback-status.error {
+  color: var(--danger);
+}
+
+.feedback-status.synced {
+  color: var(--sage);
+}
+
+.feedback-status.syncing {
+  color: var(--teal-dark);
+}
+
+.feedback-admin {
+  position: sticky;
+  top: 16px;
+}
+
+.feedback-admin-tools {
+  padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.feedback-item {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.feedback-item-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(130px, auto);
+  gap: 12px;
+  align-items: start;
+}
+
+.feedback-item h3,
+.feedback-item p {
+  margin: 0;
+}
+
+.feedback-item-head > div > p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.feedback-details {
+  white-space: pre-wrap;
+}
+
+.feedback-meta-grid div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.feedback-meta-grid span,
+.feedback-item details p {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+
+.feedback-item textarea {
+  min-height: 96px;
+}
+
 .quiz-availability {
   min-height: 34px;
 }
@@ -2686,11 +2794,13 @@ td {
 
   .dashboard-layout,
   .scenario-layout,
-  .skill-layout {
+  .skill-layout,
+  .feedback-layout {
     grid-template-columns: 1fr;
   }
 
-  .scenario-notes {
+  .scenario-notes,
+  .feedback-admin {
     position: static;
   }
 }
@@ -2764,6 +2874,9 @@ td {
 
   .appearance-tools,
   .profile-tools,
+  .feedback-grid,
+  .feedback-meta-grid,
+  .feedback-item-head,
   .stats-grid {
     grid-template-columns: 1fr;
   }

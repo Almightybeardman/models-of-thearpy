@@ -8,6 +8,7 @@ Offline-first study app for Bowen Family Systems Therapy, EFT, LMFT/systemic rol
 - Questionnaire with adjustable difficulty and question count
 - Real Life Examples with guided and written case scoring
 - Skill Lab with model comparison, therapist response practice, Bowen triangle/genogram drills, EFT cycle mapping, next-intervention choices, ethics/risk scanning, redo-with-feedback, and weak-area practice
+- Bug Reports / Feature Requests inbox with learner submissions and a private admin view
 
 ## Run Locally
 
@@ -44,6 +45,16 @@ Convex sync is off by default. To enable it:
 The app stores each member's local study copy as one Convex `studyProfiles` document. The restore ID is created automatically and is only needed for support or device-transfer work.
 
 Do not store sensitive clinical information in this app. Sync stores profile names, progress, quiz history, and written scenario reflections in Convex.
+
+## Admin Request Inbox
+
+The Bug Reports / Feature Requests tab uses Convex HTTP actions. To enable the admin login, set this Convex production environment variable:
+
+```sh
+FEEDBACK_ADMIN_PASSWORD=your-private-admin-password
+```
+
+Learners can submit requests without logging in. The admin password is checked by Convex and is not stored in the website files.
 
 ## Convex Config Example
 

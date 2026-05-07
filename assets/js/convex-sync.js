@@ -25,7 +25,15 @@
 
   function endpoint(kind) {
     var endpoints = config.endpoints || {};
-    var path = endpoints[kind] || (kind === "push" ? "/pushStudyProfile" : "/pullStudyProfile");
+    var defaults = {
+      push: "/pushStudyProfile",
+      pull: "/pullStudyProfile",
+      submitFeedback: "/submitFeedback",
+      adminLogin: "/adminLogin",
+      adminListFeedback: "/adminListFeedback",
+      adminUpdateFeedback: "/adminUpdateFeedback"
+    };
+    var path = endpoints[kind] || defaults[kind] || "/" + kind;
     var base = String(config.siteUrl || "").replace(/\/+$/, "");
     return base + (path.charAt(0) === "/" ? path : "/" + path);
   }
@@ -79,10 +87,46 @@
     return data.payload;
   }
 
+  function submitFeedback(payload) {
+    return request("submitFeedback", payload || {});
+  }
+
+  function adminLogin(password) {
+    return request("adminLogin", {
+      password: password
+    });
+  }
+
+  function adminListFeedback(token, status) {
+    return request("adminListFeedback", {
+      token: token,
+      status: status || "all"
+    });
+  }
+
+  function adminUpdateFeedback(token, id, updates) {
+    updates = updates || {};
+    return request("adminUpdateFeedback", {
+      token: token,
+      id: id,
+      status: updates.status,
+      adminNote: updates.adminNote
+    });
+  }
+
   window.STUDY_SYNC = {
     provider: "convex",
     isConfigured: isConfigured,
     push: push,
     pull: pull
+  };
+
+  window.STUDY_FEEDBACK = {
+    provider: "convex",
+    isConfigured: isConfigured,
+    submit: submitFeedback,
+    adminLogin: adminLogin,
+    adminList: adminListFeedback,
+    adminUpdate: adminUpdateFeedback
   };
 })();

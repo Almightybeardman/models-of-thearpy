@@ -52,3 +52,13 @@ Open the hosted site and use the app normally. When Convex is configured:
 - Restore tools are only surfaced as a support fallback if automatic sync needs attention.
 
 Do not store sensitive clinical information. The restore ID protects casual access, but this is still an educational study tool, not a clinical record system.
+
+## 5. Enable Admin Login
+
+The request inbox is powered by Convex. In the Convex dashboard, set this production environment variable before using the admin view:
+
+```sh
+FEEDBACK_ADMIN_PASSWORD=your-private-admin-password
+```
+
+Visitors can submit bug reports and feature requests without this password. Only the admin list and status updates require it.

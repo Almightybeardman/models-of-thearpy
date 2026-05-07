@@ -6,7 +6,11 @@
     siteUrl: "https://standing-lemming-36.convex.site",
     endpoints: {
       push: "/pushStudyProfile",
-      pull: "/pullStudyProfile"
+      pull: "/pullStudyProfile",
+      submitFeedback: "/submitFeedback",
+      adminLogin: "/adminLogin",
+      adminListFeedback: "/adminListFeedback",
+      adminUpdateFeedback: "/adminUpdateFeedback"
     }
   };
 })();
