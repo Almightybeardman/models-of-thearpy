@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LMFT Therapy Study Lab</title>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("therapyStudyTheme:v1") || "light";
+          var accent = localStorage.getItem("therapyStudyAccent:v1") || "teal";
+          var darkThemes = ["dark", "graphite", "midnight", "obsidian", "carbon", "deep-ocean", "twilight", "void", "onyx"];
+          document.documentElement.setAttribute("data-theme", theme);
+          document.documentElement.setAttribute("data-tone", darkThemes.indexOf(theme) === -1 ? "light" : "dark");
+          document.documentElement.setAttribute("data-accent", accent);
+        } catch (error) {
+          document.documentElement.setAttribute("data-theme", "light");
+          document.documentElement.setAttribute("data-tone", "light");
+          document.documentElement.setAttribute("data-accent", "teal");
+        }
+      })();
+    </script>
+    <link rel="stylesheet" href="assets/css/styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">LM</div>
+          <div>
+            <h1>LMFT Therapy Study Lab</h1>
+            <p>Bowen, EFT, systemic roles, and case practice</p>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <div class="appearance-tools" aria-label="Appearance controls">
+            <div class="control-pair">
+              <label for="themeSelect">Theme</label>
+              <select id="themeSelect" aria-label="Theme">
+                <option value="light">Light</option>
+                <option value="paper">Paper</option>
+                <option value="mist">Mist</option>
+                <option value="dark">Dark</option>
+                <option value="graphite">Graphite</option>
+                <option value="midnight">Midnight</option>
+                <option value="obsidian">Obsidian</option>
+                <option value="carbon">Carbon</option>
+                <option value="deep-ocean">Deep Ocean</option>
+                <option value="twilight">Twilight</option>
+                <option value="void">Void</option>
+                <option value="onyx">Onyx</option>
+              </select>
+            </div>
+            <div class="control-pair">
+              <label for="accentSelect">Accent</label>
+              <select id="accentSelect" aria-label="Accent color">
+                <option value="teal">Teal</option>
+                <option value="blue">Blue</option>
+                <option value="pink">Pink</option>
+                <option value="red">Red</option>
+                <option value="purple">Purple</option>
+                <option value="emerald">Emerald</option>
+                <option value="cyan">Cyan</option>
+                <option value="indigo">Indigo</option>
+                <option value="orange">Orange</option>
+                <option value="amber">Amber</option>
+                <option value="lime">Lime</option>
+                <option value="rose">Rose</option>
+                <option value="slate">Slate</option>
+              </select>
+            </div>
+          </div>
+
+          <form class="profile-tools" id="profileForm">
+            <div class="control-pair">
+              <label for="profileSelect">Profile</label>
+              <select id="profileSelect"></select>
+            </div>
+            <div class="control-pair profile-name-pair">
+              <label for="profileName">New profile</label>
+              <input id="profileName" type="text" maxlength="28" placeholder="Name" autocomplete="off">
+            </div>
+            <button type="submit">Add</button>
+          </form>
+        </div>
+      </header>
+
+      <nav class="view-tabs" aria-label="Main sections">
+        <button class="is-active" type="button" data-view-button="dashboard">Dashboard</button>
+        <button type="button" data-view-button="guide">Study Guide</button>
+        <button type="button" data-view-button="quiz">Questionnaire</button>
+        <button type="button" data-view-button="scenarios">Real Life Examples</button>
+        <button type="button" data-view-button="skill">Skill Lab</button>
+        <button type="button" data-view-button="progress">Progress</button>
+      </nav>
+
+      <main>
+        <section class="view is-active" id="dashboard" aria-labelledby="dashboardTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Today</p>
+              <h2 id="dashboardTitle">Study Dashboard</h2>
+            </div>
+            <p class="fine-print">Educational exam prep only. Use current law, ethics codes, supervision, and official exam materials for clinical decisions.</p>
+          </div>
+
+          <div class="stats-grid" id="dashboardStats"></div>
+
+          <section class="panel today-panel">
+            <h3>Daily Clinic Mode</h3>
+            <div id="todayStudyPath"></div>
+          </section>
+
+          <div class="action-row">
+            <button type="button" data-jump-view="guide">Open Study Guide</button>
+            <button type="button" data-jump-view="quiz">Start Questionnaire</button>
+            <button type="button" data-jump-view="scenarios">Practice Scenarios</button>
+            <button type="button" data-jump-view="skill">Skill Lab</button>
+            <button class="secondary" type="button" id="practiceWeakNow">Practice Weak Spots</button>
+          </div>
+
+          <div class="dashboard-layout">
+            <section class="panel">
+              <h3>Focus Queue</h3>
+              <div id="focusQueue" class="focus-list"></div>
+            </section>
+            <section class="panel">
+              <h3>Source Anchors</h3>
+              <div id="sourceList" class="source-list"></div>
+            </section>
+          </div>
+
+          <section class="panel sync-panel" id="syncPanelShell" hidden>
+            <h3>Automatic Sync</h3>
+            <div id="syncPanel"></div>
+          </section>
+        </section>
+
+        <section class="view" id="guide" aria-labelledby="guideTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Reference</p>
+              <h2 id="guideTitle">Study Guide</h2>
+            </div>
+            <div class="toolbar">
+              <label for="guideFilter">Model</label>
+              <select id="guideFilter">
+                <option value="all">All</option>
+              </select>
+              <label for="guideSearch">Search</label>
+              <input id="guideSearch" type="search" placeholder="topic or term">
+            </div>
+          </div>
+          <div class="result-summary" id="guideResults"></div>
+          <div class="guide-grid" id="guideGrid"></div>
+        </section>
+
+        <section class="view" id="quiz" aria-labelledby="quizTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Recall</p>
+              <h2 id="quizTitle">Questionnaire</h2>
+            </div>
+            <form class="toolbar" id="quizSetup">
+              <label for="quizMode">Mode</label>
+              <select id="quizMode">
+                <option value="practice" selected>Practice</option>
+                <option value="review">Spaced Review</option>
+                <option value="timed">Timed Mixed</option>
+              </select>
+              <label for="quizDifficulty">Difficulty</label>
+              <select id="quizDifficulty">
+                <option value="mixed">Mixed</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+              <label for="quizTopic">Topic</label>
+              <select id="quizTopic">
+                <option value="all">All</option>
+              </select>
+              <label for="quizCount">Questions</label>
+              <select id="quizCount">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+                <option value="25">25</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="all">All matching</option>
+              </select>
+              <button type="submit">Start</button>
+            </form>
+          </div>
+
+          <div class="quiz-shell">
+            <div class="quiz-status" id="quizStatus"></div>
+            <div class="practice-card" id="quizCard"></div>
+          </div>
+        </section>
+
+        <section class="view" id="scenarios" aria-labelledby="scenarioTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Application</p>
+              <h2 id="scenarioTitle">Real Life Examples</h2>
+            </div>
+            <form class="toolbar" id="scenarioSetup">
+              <label for="scenarioDifficulty">Difficulty</label>
+              <select id="scenarioDifficulty">
+                <option value="mixed">Mixed</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+              <label for="scenarioMode">Mode</label>
+              <select id="scenarioMode">
+                <option value="combined" selected>Combined</option>
+                <option value="guided">Guided Choices</option>
+                <option value="written">Written Reflection</option>
+                <option value="error">Spot Therapist Error</option>
+              </select>
+              <label for="scenarioCase">Case</label>
+              <select id="scenarioCase">
+                <option value="random">Random case</option>
+              </select>
+              <button type="submit">Random Case</button>
+            </form>
+          </div>
+
+          <div class="case-library" id="scenarioLibrary"></div>
+
+          <div class="scenario-layout">
+            <div class="practice-card" id="scenarioCard"></div>
+            <aside class="panel scenario-notes">
+              <h3>Case Score</h3>
+              <div id="scenarioScore"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" id="skill" aria-labelledby="skillTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Clinical Skills</p>
+              <h2 id="skillTitle">Skill Lab</h2>
+            </div>
+            <form class="toolbar" id="skillSetup">
+              <label for="skillMode">Mode</label>
+              <select id="skillMode">
+                <option value="modelCompare">What Would Each Model Do?</option>
+                <option value="responsePractice">Therapist Response Practice</option>
+                <option value="bowenTrainer">Bowen Genogram / Triangle Trainer</option>
+                <option value="eftMapper">EFT Cycle Mapper</option>
+                <option value="nextIntervention">Next Best Intervention</option>
+                <option value="ethicsScanner">Ethics/Risk Scanner</option>
+                <option value="weak">Weak Area Practice</option>
+              </select>
+              <label for="skillDifficulty">Difficulty</label>
+              <select id="skillDifficulty">
+                <option value="mixed">Mixed</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+              <label for="skillCase">Drill</label>
+              <select id="skillCase">
+                <option value="random">Random drill</option>
+              </select>
+              <button type="submit">Load</button>
+            </form>
+          </div>
+
+          <div class="skill-layout">
+            <div class="practice-card" id="skillCard"></div>
+            <aside class="panel scenario-notes">
+              <h3>Skill Score</h3>
+              <div id="skillScore"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" id="progress" aria-labelledby="progressTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Review</p>
+              <h2 id="progressTitle">Progress</h2>
+            </div>
+            <button class="danger" id="resetProfile" type="button">Clear This Profile</button>
+          </div>
+
+          <div class="dashboard-layout">
+            <section class="panel mastery-panel">
+              <h3>Mastery Snapshot</h3>
+              <div id="masteryDashboard"></div>
+            </section>
+            <section class="panel">
+              <h3>Questionnaire History</h3>
+              <div id="quizHistory"></div>
+            </section>
+            <section class="panel">
+              <h3>Scenario History</h3>
+              <div id="scenarioHistory"></div>
+            </section>
+            <section class="panel">
+              <h3>Skill Lab History</h3>
+              <div id="skillHistory"></div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <noscript>This study app needs JavaScript enabled.</noscript>
+    <script src="assets/js/convex-config.js"></script>
+    <script src="assets/js/study-data.js"></script>
+    <script src="assets/js/convex-sync.js"></script>
+    <script src="assets/js/app.js"></script>
+  </body>
+</html>

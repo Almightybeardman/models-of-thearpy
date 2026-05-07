@@ -1,0 +1,14 @@
+{
+  "name": "lmft-therapy-study-lab",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node -e \"console.log('Static app: no build step')\"",
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy"
+  },
+  "dependencies": {
+    "convex": "latest"
+  },
+  "devDependencies": {}
+}
