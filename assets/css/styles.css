@@ -3483,6 +3483,28 @@ body {
   padding: 40px 32px 64px;
 }
 
+.app-shell.is-guide-wide .content-shell > main {
+  width: min(100%, 1840px);
+}
+
+.app-shell.is-guide-wide #guide .guide-grid,
+.app-shell.is-guide-wide #guide .result-summary,
+.app-shell.is-guide-wide #guide .section-heading {
+  width: min(100%, 1500px);
+}
+
+.app-shell.is-guide-wide #guide .guide-card {
+  width: 100%;
+}
+
+.app-shell.is-guide-wide #guide .guide-body {
+  grid-template-columns: minmax(520px, 0.92fr) minmax(620px, 1.08fr);
+}
+
+.app-shell.is-guide-wide #guide .guide-card-head {
+  grid-template-columns: minmax(360px, 0.48fr) minmax(0, 1fr);
+}
+
 .app-shell.sidebar-collapsed,
 .app-shell.is-guide-wide.sidebar-collapsed {
   grid-template-columns: 0 minmax(0, 1fr);
@@ -3656,6 +3678,26 @@ html[data-tone="dark"] .micro-drill {
   color: #ffffff;
 }
 
+html[data-tone="dark"] .empty-state,
+html[data-tone="dark"] .source-item,
+html[data-tone="dark"] .focus-item,
+html[data-tone="dark"] .history-item,
+html[data-tone="dark"] .weak-item,
+html[data-tone="dark"] .quiz-availability {
+  color: #dbe6f4 !important;
+  background: #101620 !important;
+  border-color: #2c384a !important;
+}
+
+html[data-tone="dark"] .source-item span,
+html[data-tone="dark"] .empty-state {
+  color: #aebbd0 !important;
+}
+
+html[data-tone="dark"] .source-item a {
+  color: #6ff0d2 !important;
+}
+
 .worksheet-intro {
   margin: 14px 0;
   padding: 12px 14px;
@@ -3723,6 +3765,18 @@ textarea {
   .app-shell,
   .app-shell.is-guide-wide {
     grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .app-shell.is-guide-wide .content-shell > main,
+  .app-shell.is-guide-wide #guide .guide-grid,
+  .app-shell.is-guide-wide #guide .result-summary,
+  .app-shell.is-guide-wide #guide .section-heading {
+    width: 100%;
+  }
+
+  .app-shell.is-guide-wide #guide .guide-body,
+  .app-shell.is-guide-wide #guide .guide-card-head {
+    grid-template-columns: 1fr;
   }
 
   .content-shell > main {
