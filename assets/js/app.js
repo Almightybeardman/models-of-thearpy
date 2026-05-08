@@ -10,6 +10,15 @@
   var SYNC_CODE_KEY = "therapyStudySyncCode:v1";
   var FEEDBACK_ADMIN_TOKEN_KEY = "therapyStudyFeedbackAdminToken:v1";
   var REVIEW_INTERVAL_DAYS = [0, 1, 3, 7];
+  var VIEW_CHROME = {
+    dashboard: { kicker: "TODAY", title: "Study Dashboard" },
+    guide: { kicker: "REFERENCE", title: "Study Guide" },
+    quiz: { kicker: "RECALL", title: "Questionnaire" },
+    scenarios: { kicker: "APPLICATION", title: "Real Life Examples" },
+    skill: { kicker: "CLINICAL SKILLS", title: "Skill Lab" },
+    feedback: { kicker: "REQUESTS", title: "Bug Reports / Feature Requests" },
+    progress: { kicker: "REVIEW", title: "Progress" }
+  };
 
   var state = {
     profiles: [],
@@ -53,6 +62,8 @@
     els.profileName = document.getElementById("profileName");
     els.themeSelect = document.getElementById("themeSelect");
     els.accentSelect = document.getElementById("accentSelect");
+    els.viewCrumbKicker = document.getElementById("viewCrumbKicker");
+    els.viewCrumbTitle = document.getElementById("viewCrumbTitle");
     els.syncPanelShell = document.getElementById("syncPanelShell");
     els.syncPanel = document.getElementById("syncPanel");
     els.dashboardStats = document.getElementById("dashboardStats");
@@ -130,6 +141,13 @@
     var shell = document.querySelector(".app-shell");
     if (shell) {
       shell.classList.toggle("is-guide-wide", viewId === "guide");
+    }
+    var chrome = VIEW_CHROME[viewId] || VIEW_CHROME.dashboard;
+    if (els.viewCrumbKicker) {
+      els.viewCrumbKicker.textContent = chrome.kicker;
+    }
+    if (els.viewCrumbTitle) {
+      els.viewCrumbTitle.textContent = chrome.title;
     }
     if (viewId === "feedback") {
       renderFeedback();
@@ -1222,6 +1240,26 @@
     node.textContent = message || "";
   }
 
+  function clearFeedbackAdminToken() {
+    state.feedbackAdminToken = "";
+    safeStorage.setItem(FEEDBACK_ADMIN_TOKEN_KEY, "");
+  }
+
+  function normalizeFeedbackAdminError(error, fallback) {
+    var message = String((error && error.message) || fallback || "Could not complete admin request.");
+    message = message.split("\n")[0].replace(/^Uncaught Error:\s*/i, "");
+    if (/requireAdmin|session|expired|log in|unauthorized/i.test(message)) {
+      return {
+        expired: true,
+        message: "Admin session expired. Log in again."
+      };
+    }
+    return {
+      expired: false,
+      message: message
+    };
+  }
+
   async function submitFeedbackRequest(event) {
     event.preventDefault();
     var feedback = window.STUDY_FEEDBACK;
@@ -1301,18 +1339,21 @@
       state.feedbackAdminMessage = "Logged in.";
       await loadFeedbackItems();
     } catch (error) {
+      var loginError = normalizeFeedbackAdminError(error, "Could not log in.");
       state.feedbackAdminStatus = "error";
-      state.feedbackAdminMessage = error.message || "Could not log in.";
+      state.feedbackAdminMessage = loginError.message;
+      if (loginError.expired) {
+        clearFeedbackAdminToken();
+      }
       renderFeedbackAdmin();
     }
   }
 
   function logoutFeedbackAdmin() {
-    state.feedbackAdminToken = "";
+    clearFeedbackAdminToken();
     state.feedbackItems = [];
     state.feedbackAdminStatus = "idle";
     state.feedbackAdminMessage = "";
-    safeStorage.setItem(FEEDBACK_ADMIN_TOKEN_KEY, "");
     renderFeedbackAdmin();
   }
 
@@ -1334,12 +1375,12 @@
       state.feedbackAdminStatus = "synced";
       state.feedbackAdminMessage = state.feedbackItems.length + " request" + (state.feedbackItems.length === 1 ? "" : "s") + " loaded.";
     } catch (error) {
+      var loadError = normalizeFeedbackAdminError(error, "Could not load requests.");
       state.feedbackItems = [];
       state.feedbackAdminStatus = "error";
-      state.feedbackAdminMessage = error.message || "Could not load requests.";
-      if (/session|log in/i.test(state.feedbackAdminMessage)) {
-        state.feedbackAdminToken = "";
-        safeStorage.setItem(FEEDBACK_ADMIN_TOKEN_KEY, "");
+      state.feedbackAdminMessage = loadError.message;
+      if (loadError.expired) {
+        clearFeedbackAdminToken();
       }
     }
 
@@ -1419,8 +1460,12 @@
       state.feedbackAdminMessage = "Request saved.";
       await loadFeedbackItems();
     } catch (error) {
+      var saveError = normalizeFeedbackAdminError(error, "Could not save request.");
       state.feedbackAdminStatus = "error";
-      state.feedbackAdminMessage = error.message || "Could not save request.";
+      state.feedbackAdminMessage = saveError.message;
+      if (saveError.expired) {
+        clearFeedbackAdminToken();
+      }
       button.disabled = false;
       renderFeedbackAdmin();
     }
