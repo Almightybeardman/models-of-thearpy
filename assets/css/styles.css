@@ -3493,16 +3493,35 @@ body {
   width: 100%;
 }
 
+.app-shell.is-guide-wide #guide .guide-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 540px), 1fr));
+  align-items: start;
+}
+
 .app-shell.is-guide-wide #guide .guide-card {
   width: 100%;
+  align-self: start;
+  padding: 16px;
 }
 
 .app-shell.is-guide-wide #guide .guide-body {
-  grid-template-columns: minmax(520px, 0.92fr) minmax(620px, 1.08fr);
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .app-shell.is-guide-wide #guide .guide-card-head {
-  grid-template-columns: minmax(360px, 0.48fr) minmax(0, 1fr);
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.app-shell.is-guide-wide #guide .guide-side {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.app-shell.is-guide-wide #guide .term-list-compact,
+.app-shell.is-guide-wide #guide .guide-study-strip {
+  grid-template-columns: 1fr;
 }
 
 .app-shell.sidebar-collapsed,
