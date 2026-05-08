@@ -2,6 +2,194 @@
   "use strict";
 
   var DATA = window.STUDY_DATA || { resources: [], studySections: [], questions: [], scenarios: [], flashcards: [], clinicDrills: [], skillDrills: [] };
+  var MATCH_ROUNDS = [
+    {
+      id: "match-bowen-triangle",
+      title: "Mother, Father, Adult Child",
+      model: "Bowen",
+      context: "A family enters after repeated arguments about an adult child moving back home.",
+      dialogue: [
+        { speaker: "Client", text: "When my husband gets quiet, I call our daughter and tell her how impossible he is being." },
+        { speaker: "Therapist", text: "So when tension rises between the two of you, your daughter gets pulled into the anxiety." },
+        { speaker: "Client", text: "She usually takes my side, then he gets even colder." },
+        { speaker: "Therapist", text: "Let's slow that triangle down and map what each person does when the anxiety increases." }
+      ],
+      answer: "Bowen",
+      clue: "The therapist names triangling, maps multigenerational/systemic anxiety, and slows reactivity instead of chasing emotional processing."
+    },
+    {
+      id: "match-eft-cycle",
+      title: "Pursue and Withdraw",
+      model: "EFT",
+      context: "A couple describes the same fight repeating every weekend.",
+      dialogue: [
+        { speaker: "Partner A", text: "I raise my voice because it feels like I do not matter." },
+        { speaker: "Partner B", text: "And when I hear yelling, I shut down before I say something worse." },
+        { speaker: "Therapist", text: "The more you protest for connection, the more you protect by withdrawing. That cycle is the enemy here." },
+        { speaker: "Therapist", text: "Can we reach the softer fear under the anger for a moment?" }
+      ],
+      answer: "EFT",
+      clue: "The therapist tracks a negative cycle, validates protection, and moves toward primary emotion and attachment needs."
+    },
+    {
+      id: "match-ethics-report",
+      title: "Safety Before Insight",
+      model: "Ethics",
+      context: "An individual client discloses a possible mandated reporting issue near the end of session.",
+      dialogue: [
+        { speaker: "Client", text: "I grabbed my son hard enough to leave marks. I am scared I might do it again." },
+        { speaker: "Therapist", text: "I am glad you told me. We need to address safety right now." },
+        { speaker: "Client", text: "Are you going to tell someone?" },
+        { speaker: "Therapist", text: "I will explain my legal duty, make a safety plan with you, consult as needed, and document the steps clearly." }
+      ],
+      answer: "Ethics",
+      clue: "Risk, mandated duties, informed consent limits, consultation, and documentation come before model-specific technique."
+    },
+    {
+      id: "match-systemic-circular",
+      title: "Whole Family Pattern",
+      model: "Systemic Roles",
+      context: "Parents bring a teen for defiance, but the session reveals a wider interaction pattern.",
+      dialogue: [
+        { speaker: "Parent", text: "He is the problem. If he stopped arguing, our house would be calm." },
+        { speaker: "Therapist", text: "I want to understand the whole sequence. Who notices the tension first, and what happens next?" },
+        { speaker: "Teen", text: "Mom gets worried, Dad gets strict, then I leave." },
+        { speaker: "Therapist", text: "Let's track how each response shapes the next one, so the system has more options." }
+      ],
+      answer: "Systemic Roles",
+      clue: "The therapist avoids the identified-patient trap and uses circular/process questions to assess the interactional pattern."
+    },
+    {
+      id: "match-bowen-iposition",
+      title: "Borrowed Self",
+      model: "Bowen",
+      context: "A client says family contact instantly changes their decisions.",
+      dialogue: [
+        { speaker: "Client", text: "I know what I want until my mother calls. Then I agree with whatever keeps her calm." },
+        { speaker: "Therapist", text: "Let's notice the pull toward fusion and practice an I-position you can hold without attacking or disappearing." },
+        { speaker: "Client", text: "So I do not have to convince her?" },
+        { speaker: "Therapist", text: "Right. The task is to stay connected while thinking and acting from a clearer self." }
+      ],
+      answer: "Bowen",
+      clue: "Differentiation, fusion, I-position, and staying connected while maintaining self are Bowen clues."
+    },
+    {
+      id: "match-eft-enactment",
+      title: "Say It Here",
+      model: "EFT",
+      context: "A couple starts to identify softer emotions under criticism and distance.",
+      dialogue: [
+        { speaker: "Partner A", text: "When you walk away, I tell myself I am not worth staying for." },
+        { speaker: "Therapist", text: "Can you turn and tell him that directly, in this room, from that softer place?" },
+        { speaker: "Partner B", text: "I did not know that was what happened inside." },
+        { speaker: "Therapist", text: "Stay with that. This is the new emotional signal your cycle usually hides." }
+      ],
+      answer: "EFT",
+      clue: "The therapist uses enactment, present emotional experience, and attachment vulnerability."
+    }
+  ];
+  var MATCH_OPTIONS = ["Bowen", "EFT", "Ethics", "Systemic Roles"];
+  var WHAT_TO_SAY_NEXT_CASES = [
+    {
+      id: "saynext-eft-pursue-withdraw",
+      title: "Couple Stuck in Pursue-Withdraw",
+      difficulty: "medium",
+      clientType: "Couple",
+      focus: ["EFT", "Negative cycle", "Therapist response"],
+      presentingProblem: "A couple reports that one partner pushes for reassurance while the other shuts down.",
+      prompt: "Choose the therapist response that keeps the session emotionally focused, balanced, and clinically paced.",
+      turns: [
+        {
+          client: "I keep asking if we are okay, and he just stares at the floor. It makes me feel pathetic.",
+          choices: [
+            { text: "Tell him he needs to reassure you more often.", score: 35, feedback: "Too directive and alliance-risky. It sides with one partner before tracking the cycle.", followup: "He says, 'So I am the problem again,' and looks away." },
+            { text: "Slow the moment down and name the pursue-withdraw pattern without blaming either partner.", score: 100, feedback: "Strong. It tracks the cycle and protects both partners from blame.", followup: "Both partners nod. He says, 'That is pretty much what happens every time.'" },
+            { text: "Ask each partner to list three household changes they want.", score: 45, feedback: "Concrete, but it moves away from the live emotional process too early.", followup: "They start debating chores and the emotional moment fades." },
+            { text: "Change topics to family history immediately.", score: 55, feedback: "Family history may matter, but the live cycle is available right now.", followup: "She says, 'I guess, but this is happening right here too.'" }
+          ],
+          topic: "Track the cycle"
+        },
+        {
+          client: "When she gets intense, I freeze. If I say anything wrong, the night is ruined.",
+          choices: [
+            { text: "So you are afraid your response will make things worse, and shutting down is your protection.", score: 100, feedback: "Strong reflection. It validates protection and accesses the softer fear.", followup: "He exhales and says, 'Yes. I am not trying to punish her.'" },
+            { text: "You need to stop shutting down because it hurts her.", score: 30, feedback: "This is likely to shame him and intensify withdrawal.", followup: "He crosses his arms and says, 'I knew this would become my fault.'" },
+            { text: "Let's ignore the freezing for now and focus on communication rules.", score: 45, feedback: "Rules may help later, but this misses primary emotion.", followup: "The couple agrees politely, but the emotional energy drops." },
+            { text: "Ask whether he has a diagnosis that explains freezing.", score: 40, feedback: "Assessment can matter, but the immediate relational cue is clearer.", followup: "He says, 'I do not know. I just get overwhelmed.'" }
+          ],
+          topic: "Access protection"
+        },
+        {
+          client: "I do not want to be too much. I just want to know I still matter.",
+          choices: [
+            { text: "That sounds like the softer attachment fear underneath the protest.", score: 100, feedback: "Strong EFT move: name primary emotion and attachment longing.", followup: "She tears up and says, 'Yes, that is it.'" },
+            { text: "You should say that to him every day until he believes it.", score: 50, feedback: "It encourages directness but jumps into advice before deepening.", followup: "She says, 'I try, but then I get angry.'" },
+            { text: "This sounds irrational, because he is sitting here.", score: 10, feedback: "Invalidating. It misses the emotional reality of the cycle.", followup: "She pulls back and says, 'Never mind.'" },
+            { text: "Ask him to promise he will never withdraw again.", score: 25, feedback: "Unrealistic and pressure-heavy. It can increase failure and shame.", followup: "He says, 'I cannot promise that.'" }
+          ],
+          topic: "Primary emotion"
+        },
+        {
+          client: "I did not know she felt that scared. I thought she was just mad at me.",
+          choices: [
+            { text: "Invite him to tell her what lands differently as he hears the fear underneath the anger.", score: 100, feedback: "Good enactment. It creates a new in-session emotional exchange.", followup: "He turns toward her and says, 'I did not know you felt alone.'" },
+            { text: "Move on because he understands now.", score: 45, feedback: "Understanding is useful, but EFT consolidates through contact between partners.", followup: "They both look unsure about what to do next." },
+            { text: "Ask her to apologize for being angry.", score: 35, feedback: "This risks blame and bypasses the attachment fear.", followup: "She says, 'I knew this would become about me being wrong.'" },
+            { text: "Tell him to write that insight down for homework.", score: 55, feedback: "Homework may help later, but the live moment is stronger.", followup: "He nods, but the connection in the room softens less." }
+          ],
+          topic: "Enactment"
+        },
+        {
+          client: "When you say you did not know, I feel sad. I have been yelling because I was scared.",
+          choices: [
+            { text: "Stay with that sadness and help her speak from it slowly.", score: 100, feedback: "Strong. It deepens primary emotion and slows reactivity.", followup: "She speaks more quietly: 'I miss feeling close to you.'" },
+            { text: "Tell her anger is never useful.", score: 20, feedback: "Too absolute. It shames protective emotion instead of translating it.", followup: "She stiffens and says, 'Then I do not know what to say.'" },
+            { text: "Ask them to negotiate date night.", score: 50, feedback: "Premature problem-solving. The attachment moment is still unfolding.", followup: "They discuss schedules but stop looking at each other." },
+            { text: "Ask him why he made her feel scared.", score: 25, feedback: "This turns the cycle into blame.", followup: "He says, 'I did not make her do anything.'" }
+          ],
+          topic: "Deepen emotion"
+        },
+        {
+          client: "I miss you too. I hide because I am afraid I will disappoint you again.",
+          choices: [
+            { text: "Reflect his fear of disappointing her and invite her to take it in before responding.", score: 100, feedback: "Strong. This protects the vulnerable disclosure and keeps the exchange paced.", followup: "She says, 'I did not know you felt like a failure.'" },
+            { text: "Ask him to explain all the ways he has disappointed her.", score: 20, feedback: "This increases shame and pulls away from secure contact.", followup: "He looks down and stops talking." },
+            { text: "Tell her she should forgive him now.", score: 30, feedback: "Too directive and premature.", followup: "She says, 'I am not there yet.'" },
+            { text: "Switch to teaching active listening steps.", score: 55, feedback: "Skills can support, but the live attachment exchange is richer.", followup: "They repeat phrases, but the vulnerability thins out." }
+          ],
+          topic: "Protect vulnerability"
+        },
+        {
+          client: "Part of me wants to reach for him, and part of me is still angry.",
+          choices: [
+            { text: "Normalize both parts and help her choose a small reachable message from the softer place.", score: 100, feedback: "Good pacing. It honors complexity while guiding a tolerable enactment.", followup: "She says, 'I can tell him I want to try, but I am scared.'" },
+            { text: "Tell her to ignore the anger and hug him.", score: 25, feedback: "Too fast. It can override her protective response.", followup: "She says, 'That feels forced.'" },
+            { text: "Focus only on the anger because it is louder.", score: 45, feedback: "Anger matters, but the softer longing is available too.", followup: "The conversation moves back toward protest." },
+            { text: "End the session immediately because they had a breakthrough.", score: 35, feedback: "Premature. The moment needs consolidation and safety.", followup: "They look relieved but unsure what the breakthrough means." }
+          ],
+          topic: "Pace enactment"
+        },
+        {
+          client: "I want to try, but I am scared we will go home and do the same thing again.",
+          choices: [
+            { text: "Summarize the cycle, the new softer messages, and one small signal they can practice when the cycle starts.", score: 100, feedback: "Strong close. It consolidates insight and creates a realistic next step.", followup: "They agree to name the cycle and pause before pursuing or withdrawing." },
+            { text: "Guarantee the cycle is fixed now.", score: 10, feedback: "Unethical and unrealistic. Change takes practice.", followup: "Both partners look doubtful." },
+            { text: "Assign a long list of communication homework.", score: 50, feedback: "Too much. A small, emotionally linked task is more usable.", followup: "They agree, but seem overwhelmed." },
+            { text: "Tell them to avoid hard conversations until next session.", score: 35, feedback: "Avoidance does not build new interactional capacity.", followup: "They say that may be impossible with their week." }
+          ],
+          topic: "Consolidation"
+        }
+      ],
+      summaryChecklist: [
+        { label: "Named the negative cycle", keywords: ["cycle", "pursue", "withdraw", "pattern"] },
+        { label: "Tracked primary emotion or attachment fear", keywords: ["primary", "fear", "scared", "attachment", "longing", "vulnerable"] },
+        { label: "Protected balanced alliance", keywords: ["both", "balanced", "alliance", "no blame", "without blaming"] },
+        { label: "Used enactment or in-session contact", keywords: ["enact", "turn", "tell him", "tell her", "in session", "speak"] },
+        { label: "Consolidated a realistic next step", keywords: ["practice", "next step", "pause", "signal", "home", "consolidate"] }
+      ],
+      modelAnswer: "I tracked the pursue-withdraw cycle, slowed blame, reflected each partner's protection, and helped them speak from primary attachment fear. I chose enactments only after enough safety was present, then ended by consolidating the new cycle language and one small practice step."
+    }
+  ];
   var PROFILE_KEY = "therapyStudyProfiles:v1";
   var ACTIVE_KEY = "therapyStudyActiveProfile:v1";
   var SCENARIO_KEY = "therapyStudyScenarioAttempts:v1";
@@ -14,6 +202,7 @@
     dashboard: { kicker: "TODAY", title: "Study Dashboard" },
     clinic: { kicker: "SESSION", title: "Daily Clinic" },
     guide: { kicker: "REFERENCE", title: "Study Guide" },
+    match: { kicker: "RECOGNITION", title: "Match the Model" },
     quiz: { kicker: "RECALL", title: "Questionnaire" },
     scenarios: { kicker: "APPLICATION", title: "Real Life Examples" },
     skill: { kicker: "CLINICAL SKILLS", title: "Skill Lab" },
@@ -25,6 +214,7 @@
     profiles: [],
     activeProfileId: "",
     quiz: null,
+    match: null,
     scenario: null,
     skill: null,
     clinic: null,
@@ -80,6 +270,10 @@
     els.guideSearch = document.getElementById("guideSearch");
     els.guideResults = document.getElementById("guideResults");
     els.guideGrid = document.getElementById("guideGrid");
+    els.matchSetup = document.getElementById("matchSetup");
+    els.matchFocus = document.getElementById("matchFocus");
+    els.matchCard = document.getElementById("matchCard");
+    els.matchScore = document.getElementById("matchScore");
     els.quizSetup = document.getElementById("quizSetup");
     els.quizMode = document.getElementById("quizMode");
     els.quizDifficulty = document.getElementById("quizDifficulty");
@@ -101,6 +295,7 @@
     els.skillCard = document.getElementById("skillCard");
     els.skillScore = document.getElementById("skillScore");
     els.quizHistory = document.getElementById("quizHistory");
+    els.matchHistory = document.getElementById("matchHistory");
     els.scenarioHistory = document.getElementById("scenarioHistory");
     els.skillHistory = document.getElementById("skillHistory");
     els.clinicHistory = document.getElementById("clinicHistory");
@@ -173,6 +368,7 @@
     var shell = document.querySelector(".app-shell");
     if (shell) {
       shell.classList.toggle("is-guide-wide", viewId === "guide");
+      shell.classList.toggle("is-content-wide", ["match", "quiz", "scenarios", "skill", "progress"].indexOf(viewId) !== -1);
     }
     var chrome = VIEW_CHROME[viewId] || VIEW_CHROME.dashboard;
     if (els.viewCrumbKicker) {
@@ -189,6 +385,9 @@
     }
     if (viewId === "clinic") {
       renderClinicHome();
+    }
+    if (viewId === "match") {
+      renderMatch();
     }
   }
 
@@ -227,6 +426,22 @@
     els.guideSearch.addEventListener("search", renderGuide);
     els.guideSearch.addEventListener("keyup", renderGuide);
     els.guideSearch.addEventListener("change", renderGuide);
+
+    if (els.matchSetup) {
+      els.matchSetup.addEventListener("submit", function (event) {
+        event.preventDefault();
+        startMatchRound();
+      });
+    }
+    if (els.matchFocus) {
+      els.matchFocus.addEventListener("change", function () {
+        var profile = getProfile();
+        profile.settings.matchFocus = els.matchFocus.value;
+        state.match = null;
+        saveProfiles();
+        renderMatch();
+      });
+    }
 
     els.quizSetup.addEventListener("submit", function (event) {
       event.preventDefault();
@@ -415,6 +630,7 @@
       name: name,
       createdAt: new Date().toISOString(),
       quizAttempts: [],
+      matchAttempts: [],
       scenarioAttempts: [],
       skillAttempts: [],
       clinicAttempts: [],
@@ -424,6 +640,7 @@
       settings: {
         quizDifficulty: "mixed",
         quizCount: 10,
+        matchFocus: "mixed",
         clinicLevel: "practice",
         scenarioDifficulty: "mixed",
         scenarioMode: "combined",
@@ -436,6 +653,7 @@
   function normalizeProfile(profile) {
     var normalized = profile || createProfile("Learner");
     normalized.quizAttempts = Array.isArray(normalized.quizAttempts) ? normalized.quizAttempts : [];
+    normalized.matchAttempts = Array.isArray(normalized.matchAttempts) ? normalized.matchAttempts : [];
     normalized.scenarioAttempts = Array.isArray(normalized.scenarioAttempts) ? normalized.scenarioAttempts : [];
     normalized.skillAttempts = Array.isArray(normalized.skillAttempts) ? normalized.skillAttempts : [];
     normalized.clinicAttempts = Array.isArray(normalized.clinicAttempts) ? normalized.clinicAttempts : [];
@@ -445,6 +663,7 @@
     normalized.settings = normalized.settings || {};
     if (!normalized.settings.quizDifficulty) normalized.settings.quizDifficulty = "mixed";
     if (!normalized.settings.quizCount) normalized.settings.quizCount = 10;
+    if (!normalized.settings.matchFocus) normalized.settings.matchFocus = "mixed";
     if (!normalized.settings.clinicLevel) normalized.settings.clinicLevel = "practice";
     if (!normalized.settings.scenarioDifficulty) normalized.settings.scenarioDifficulty = "mixed";
     if (!normalized.settings.scenarioMode) normalized.settings.scenarioMode = "combined";
@@ -477,6 +696,7 @@
     renderDashboard();
     renderClinicHome();
     renderGuide();
+    renderMatch();
     renderQuizPlaceholder();
     renderScenarioPlaceholder();
     renderScenarioLibrary();
@@ -497,10 +717,12 @@
   function renderDashboard() {
     var profile = getProfile();
     var quizAttempts = profile.quizAttempts || [];
+    var matchAttempts = profile.matchAttempts || [];
     var scenarioAttempts = profile.scenarioAttempts || [];
     var skillAttempts = profile.skillAttempts || [];
     var clinicAttempts = profile.clinicAttempts || [];
     var avgQuiz = average(quizAttempts.map(function (attempt) { return attempt.scorePercent; }));
+    var avgMatch = average(matchAttempts.map(function (attempt) { return attempt.scorePercent; }));
     var avgScenario = average(scenarioAttempts.map(function (attempt) { return attempt.scorePercent; }));
     var avgSkill = average(skillAttempts.map(function (attempt) { return attempt.scorePercent; }));
     var avgClinic = average(clinicAttempts.map(function (attempt) { return attempt.scorePercent; }));
@@ -511,6 +733,8 @@
       statCard(avgClinic === null ? "--" : avgClinic + "%", "Average clinic score"),
       statCard(quizAttempts.length, "Questionnaire attempts"),
       statCard(avgQuiz === null ? "--" : avgQuiz + "%", "Average questionnaire score"),
+      statCard(matchAttempts.length, "Model matches"),
+      statCard(avgMatch === null ? "--" : avgMatch + "%", "Average model match"),
       statCard(scenarioAttempts.length, "Scenario attempts"),
       statCard(avgScenario === null ? "--" : avgScenario + "%", "Average scenario score"),
       statCard(skillAttempts.length, "Skill lab attempts"),
@@ -1587,6 +1811,143 @@
     ].join("");
   }
 
+  function renderMatch() {
+    if (!els.matchCard || !els.matchScore) return;
+    var profile = getProfile();
+    var focus = profile.settings.matchFocus || "mixed";
+    if (els.matchFocus) setSelectIfOption(els.matchFocus, focus);
+    renderMatchScore();
+    if (!state.match) {
+      els.matchCard.innerHTML = [
+        "<div class=\"match-empty\">",
+        "<strong>Start with a therapy transcript.</strong>",
+        "<p>You will read a short client and therapist exchange, then choose whether the work looks like Bowen, EFT, Ethics, or Systemic Roles.</p>",
+        "<button type=\"button\" id=\"startMatchRound\">Start Dialogue</button>",
+        "</div>"
+      ].join("");
+      bindMatchEvents();
+      return;
+    }
+
+    var round = state.match.round;
+    var selected = state.match.selected;
+    var submitted = state.match.submitted;
+    els.matchCard.innerHTML = [
+      "<div class=\"match-head\">",
+      "<div><h3>" + escapeHtml(round.title) + "</h3><p>" + escapeHtml(round.context) + "</p></div>",
+      "<span class=\"tag\">" + escapeHtml(focus === "mixed" ? "Mixed" : focus) + "</span>",
+      "</div>",
+      "<div class=\"match-dialogue\" aria-label=\"Therapy dialogue\">",
+      round.dialogue.map(function (line) {
+        return "<div class=\"match-turn\"><strong>" + escapeHtml(line.speaker) + "</strong><p>" + escapeHtml(line.text) + "</p></div>";
+      }).join(""),
+      "</div>",
+      "<div class=\"match-question\"><strong>Which model or exam priority is being shown?</strong></div>",
+      "<div class=\"match-choice-grid\">",
+      MATCH_OPTIONS.map(function (optionLabel) {
+        var classes = ["match-choice"];
+        if (submitted && optionLabel === round.answer) classes.push("is-correct");
+        if (submitted && selected === optionLabel && selected !== round.answer) classes.push("is-wrong");
+        if (!submitted && selected === optionLabel) classes.push("is-selected");
+        return "<button class=\"" + classes.join(" ") + "\" type=\"button\" data-match-choice=\"" + escapeHtml(optionLabel) + "\"" + (submitted ? " disabled" : "") + ">" + escapeHtml(optionLabel) + "</button>";
+      }).join(""),
+      "</div>",
+      submitted ? renderMatchFeedback(state.match) : "",
+      "<div class=\"button-row\">",
+      submitted ? "<button type=\"button\" id=\"nextMatchRound\">Next Dialogue</button>" : "<button class=\"secondary\" type=\"button\" id=\"skipMatchRound\">Skip</button>",
+      "</div>"
+    ].join("");
+    bindMatchEvents();
+  }
+
+  function renderMatchFeedback(match) {
+    var correct = match.selected === match.round.answer;
+    return [
+      "<div class=\"feedback " + (correct ? "" : "needs-work") + "\">",
+      "<strong>" + (correct ? "Correct." : "Not quite.") + "</strong>",
+      " This is " + escapeHtml(match.round.answer) + ". " + escapeHtml(match.round.clue),
+      "</div>"
+    ].join("");
+  }
+
+  function renderMatchScore() {
+    if (!els.matchScore) return;
+    var profile = getProfile();
+    var attempts = profile.matchAttempts || [];
+    var recent = attempts.slice(0, 8);
+    var streak = 0;
+    for (var i = 0; i < attempts.length; i += 1) {
+      if (!attempts[i].correct) break;
+      streak += 1;
+    }
+    els.matchScore.innerHTML = [
+      "<div class=\"skill-score-stack\">",
+      "<div><strong>" + attempts.length + "</strong><span>Total matches</span></div>",
+      "<div><strong>" + streak + "</strong><span>Current streak</span></div>",
+      "<div><strong>" + (recent.length ? Math.round(recent.filter(function (item) { return item.correct; }).length / recent.length * 100) + "%" : "--") + "</strong><span>Recent accuracy</span></div>",
+      "</div>"
+    ].join("");
+  }
+
+  function bindMatchEvents() {
+    var start = document.getElementById("startMatchRound");
+    if (start) start.addEventListener("click", startMatchRound);
+    var next = document.getElementById("nextMatchRound");
+    if (next) next.addEventListener("click", startMatchRound);
+    var skip = document.getElementById("skipMatchRound");
+    if (skip) skip.addEventListener("click", startMatchRound);
+    if (!els.matchCard || !state.match || state.match.submitted) return;
+    els.matchCard.querySelectorAll("[data-match-choice]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        scoreMatch(button.getAttribute("data-match-choice"));
+      });
+    });
+  }
+
+  function startMatchRound() {
+    var profile = getProfile();
+    var focus = els.matchFocus ? els.matchFocus.value : (profile.settings.matchFocus || "mixed");
+    profile.settings.matchFocus = focus;
+    var pool = MATCH_ROUNDS.filter(function (round) {
+      return focus === "mixed" || round.model === focus;
+    });
+    if (!pool.length) pool = MATCH_ROUNDS.slice();
+    var lastId = state.match && state.match.round ? state.match.round.id : "";
+    var available = pool.length > 1 ? pool.filter(function (round) { return round.id !== lastId; }) : pool;
+    state.match = {
+      round: available[Math.floor(Math.random() * available.length)],
+      selected: "",
+      submitted: false
+    };
+    saveProfiles();
+    renderMatch();
+  }
+
+  function scoreMatch(answer) {
+    var profile = getProfile();
+    if (!state.match || !state.match.round || state.match.submitted) return;
+    var round = state.match.round;
+    var correct = answer === round.answer;
+    state.match.selected = answer;
+    state.match.submitted = true;
+    profile.matchAttempts = Array.isArray(profile.matchAttempts) ? profile.matchAttempts : [];
+    profile.matchAttempts.unshift({
+      date: new Date().toISOString(),
+      roundId: round.id,
+      title: round.title,
+      model: round.model,
+      selected: answer,
+      correct: correct,
+      scorePercent: correct ? 100 : 0,
+      missedAreas: correct ? [] : [round.answer + " clues"]
+    });
+    profile.matchAttempts = profile.matchAttempts.slice(0, 40);
+    saveProfiles();
+    renderMatch();
+    renderDashboard();
+    renderProgress();
+  }
+
   function getGuideSearchText(section) {
     return [
       section.model,
@@ -2130,6 +2491,11 @@
 
   function getScenarioPool() {
     var difficulty = els.scenarioDifficulty.value;
+    if (els.scenarioMode.value === "saynext") {
+      return WHAT_TO_SAY_NEXT_CASES.filter(function (scenario) {
+        return difficulty === "mixed" || scenario.difficulty === difficulty;
+      });
+    }
     var errorMode = els.scenarioMode.value === "error";
     return DATA.scenarios.filter(function (scenario) {
       var difficultyMatch = difficulty === "mixed" || scenario.difficulty === difficulty;
@@ -2141,7 +2507,10 @@
   function renderScenarioLibrary() {
     var pool = getScenarioPool();
     var selected = els.scenarioCase.value || "random";
-    els.scenarioCase.innerHTML = "<option value=\"random\">Random case</option>" + pool.map(function (scenario) {
+    var isSayNext = els.scenarioMode.value === "saynext";
+    var libraryLabel = isSayNext ? "What To Say Next sessions" : "real life examples";
+    var randomLabel = isSayNext ? "Random session" : "Random case";
+    els.scenarioCase.innerHTML = "<option value=\"random\">" + randomLabel + "</option>" + pool.map(function (scenario) {
       return "<option value=\"" + escapeHtml(scenario.id) + "\">" + escapeHtml(scenario.title) + "</option>";
     }).join("");
     els.scenarioCase.value = pool.some(function (scenario) { return scenario.id === selected; }) ? selected : "random";
@@ -2152,7 +2521,7 @@
     }
 
     els.scenarioLibrary.innerHTML = [
-      "<div class=\"case-library-head\"><strong>" + pool.length + " real life examples available</strong><span>Pick one directly or use Random Case.</span></div>",
+      "<div class=\"case-library-head\"><strong>" + pool.length + " " + libraryLabel + " available</strong><span>Pick one directly or use " + randomLabel + ".</span></div>",
       "<div class=\"case-library-grid\">",
       pool.map(function (scenario) {
         var focus = scenario.focus ? scenario.focus.join(", ") : scenario.clientType;
@@ -2202,6 +2571,7 @@
       mode: mode,
       choiceOrders: scenario ? buildScenarioChoiceOrders(scenario) : {},
       selections: {},
+      sayNext: mode === "saynext" ? { turnIndex: 0, answers: [], pending: null } : null,
       reflection: "",
       scored: false,
       result: null,
@@ -2263,6 +2633,10 @@
       return;
     }
     var scenario = session.item;
+    if (session.mode === "saynext") {
+      renderWhatToSayNextScenario(session, scenario);
+      return;
+    }
     if (scenario.errorCase || session.mode === "error") {
       renderErrorScenario(session, scenario);
       return;
@@ -2349,6 +2723,173 @@
     }
 
     renderScenarioScore();
+  }
+
+  function renderWhatToSayNextScenario(session, scenario) {
+    var run = session.sayNext || { turnIndex: 0, answers: [], pending: null };
+    session.sayNext = run;
+    var turns = scenario.turns || [];
+    var complete = run.turnIndex >= turns.length && !run.pending;
+    var transcript = renderWhatToSayTranscript(scenario, run);
+    var activeTurn = !complete ? turns[run.turnIndex] : null;
+    var choicesHtml = activeTurn && !run.pending ? [
+      "<div class=\"what-next-question\"><strong>What would you say next?</strong></div>",
+      "<div class=\"what-next-choice-grid\">",
+      activeTurn.choices.map(function (choice, index) {
+        return "<button class=\"what-next-choice\" type=\"button\" data-what-next-choice=\"" + index + "\">" + escapeHtml(choice.text) + "</button>";
+      }).join(""),
+      "</div>"
+    ].join("") : "";
+    var pendingHtml = run.pending ? [
+      "<div class=\"feedback " + (run.pending.score >= 80 ? "good" : "needs-work") + "\">",
+      "<strong>" + (run.pending.score >= 80 ? "Good move." : "Coaching note.") + "</strong> " + escapeHtml(run.pending.feedback),
+      "</div>",
+      "<div class=\"button-row\"><button type=\"button\" id=\"continueWhatNext\">" + (run.turnIndex + 1 >= turns.length ? "Write Summary" : "Continue Session") + "</button></div>"
+    ].join("") : "";
+    var summaryHtml = complete ? [
+      "<div class=\"scenario-group what-next-summary\">",
+      "<h3>Brief Summary</h3>",
+      "<p>Explain why you chose the responses you chose. Name the model lens, the client pattern, and the clinical priorities you were protecting.</p>",
+      "<label for=\"whatNextSummary\">Your summary</label>",
+      "<textarea id=\"whatNextSummary\" placeholder=\"I chose these responses because...\" " + (session.scored ? "disabled" : "") + ">" + escapeHtml(session.reflection || "") + "</textarea>",
+      "</div>",
+      session.scored ? whatNextFeedback(session.result, scenario) : "",
+      "<div class=\"button-row\">",
+      session.scored ? "<button type=\"button\" id=\"newScenario\">New Random Case</button>" : "<button type=\"button\" id=\"scoreWhatNext\">Grade Session</button>",
+      !session.scored ? "<button class=\"secondary\" type=\"button\" id=\"scenarioReset\">Restart Session</button>" : "",
+      "</div>"
+    ].join("") : "";
+
+    els.scenarioCard.innerHTML = [
+      "<div class=\"case-meta\"><span class=\"tag\">What To Say Next</span><span class=\"tag\">" + escapeHtml(scenario.difficulty) + "</span>" + (scenario.focus ? scenario.focus.map(function (item) { return "<span class=\"tag\">" + escapeHtml(item) + "</span>"; }).join("") : "") + "</div>",
+      "<h3>" + escapeHtml(scenario.title) + "</h3>",
+      "<p><strong>Presenting problem:</strong> " + escapeHtml(scenario.presentingProblem) + "</p>",
+      "<p>" + escapeHtml(scenario.prompt) + "</p>",
+      "<div class=\"progress-bar what-next-progress\" aria-label=\"What To Say Next progress\"><span style=\"width:" + Math.round((run.turnIndex / Math.max(1, turns.length)) * 100) + "%\"></span></div>",
+      transcript,
+      choicesHtml,
+      pendingHtml,
+      summaryHtml
+    ].join("");
+
+    els.scenarioCard.querySelectorAll("[data-what-next-choice]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        chooseWhatToSayNext(Number(button.getAttribute("data-what-next-choice")));
+      });
+    });
+    var continueButton = document.getElementById("continueWhatNext");
+    if (continueButton) continueButton.addEventListener("click", continueWhatToSayNext);
+    var summary = document.getElementById("whatNextSummary");
+    if (summary && !session.scored) {
+      summary.addEventListener("input", function () {
+        session.reflection = summary.value;
+      });
+    }
+    var score = document.getElementById("scoreWhatNext");
+    if (score) score.addEventListener("click", scoreWhatToSayNext);
+    var reset = document.getElementById("scenarioReset");
+    if (reset) reset.addEventListener("click", function () { startScenario(scenario.id); });
+    var next = document.getElementById("newScenario");
+    if (next) next.addEventListener("click", startScenario);
+    renderScenarioScore();
+  }
+
+  function renderWhatToSayTranscript(scenario, run) {
+    var rows = [];
+    run.answers.forEach(function (answer) {
+      var turn = scenario.turns[answer.turnIndex];
+      rows.push({ speaker: "Client", text: turn.client });
+      rows.push({ speaker: "Therapist", text: answer.response });
+      if (answer.followup) rows.push({ speaker: "Client", text: answer.followup });
+    });
+    if (!run.pending && run.turnIndex < scenario.turns.length) {
+      rows.push({ speaker: "Client", text: scenario.turns[run.turnIndex].client });
+    }
+    return "<div class=\"what-next-transcript\">" + rows.map(function (row) {
+      return "<div class=\"match-turn\"><strong>" + escapeHtml(row.speaker) + "</strong><p>" + escapeHtml(row.text) + "</p></div>";
+    }).join("") + "</div>";
+  }
+
+  function chooseWhatToSayNext(index) {
+    var session = state.scenario;
+    if (!session || !session.sayNext || session.sayNext.pending || session.scored) return;
+    var turn = session.item.turns[session.sayNext.turnIndex];
+    var choice = turn.choices[index];
+    if (!choice) return;
+    var answer = {
+      turnIndex: session.sayNext.turnIndex,
+      selectedIndex: index,
+      score: choice.score || 0,
+      topic: turn.topic || "Therapist response",
+      response: choice.text,
+      feedback: choice.feedback || "",
+      followup: choice.followup || ""
+    };
+    session.sayNext.answers.push(answer);
+    session.sayNext.pending = answer;
+    renderScenario();
+  }
+
+  function continueWhatToSayNext() {
+    var session = state.scenario;
+    if (!session || !session.sayNext || !session.sayNext.pending) return;
+    session.sayNext.turnIndex += 1;
+    session.sayNext.pending = null;
+    renderScenario();
+  }
+
+  function scoreWhatToSayNext() {
+    var profile = getProfile();
+    var session = state.scenario;
+    var scenario = session.item;
+    var answers = session.sayNext ? session.sayNext.answers : [];
+    var choicePercent = answers.length ? Math.round(answers.reduce(function (sum, answer) {
+      return sum + answer.score;
+    }, 0) / answers.length) : 0;
+    var written = scoreWritten(session.reflection, { checklist: scenario.summaryChecklist || [] });
+    var percent = Math.round(choicePercent * 0.65 + written.percent * 0.35);
+    var missedAreas = [];
+    answers.forEach(function (answer) {
+      if (answer.score < 80) missedAreas.push(answer.topic);
+    });
+    written.hits.filter(function (hit) { return !hit.matched; }).forEach(function (hit) {
+      missedAreas.push(hit.label);
+    });
+
+    session.scored = true;
+    session.result = {
+      scorePercent: percent,
+      choicePercent: choicePercent,
+      written: written,
+      missedAreas: unique(missedAreas)
+    };
+
+    profile.scenarioAttempts.unshift({
+      date: new Date().toISOString(),
+      scenarioId: scenario.id,
+      title: scenario.title,
+      mode: "What To Say Next",
+      difficulty: scenario.difficulty,
+      scorePercent: percent,
+      missedAreas: session.result.missedAreas,
+      model: modelForScenario(scenario)
+    });
+    profile.scenarioAttempts = profile.scenarioAttempts.slice(0, 40);
+    updateReviewFromScenarioAttempt(profile, profile.scenarioAttempts[0]);
+    saveProfiles();
+    saveScenarioMirror();
+    renderScenario();
+    renderDashboard();
+    renderProgress();
+  }
+
+  function whatNextFeedback(result, scenario) {
+    var missed = result.missedAreas || [];
+    return [
+      "<div class=\"feedback " + (result.scorePercent >= 80 ? "good" : "needs-work") + "\"><strong>Session score:</strong> " + result.scorePercent + "%<br><strong>Response choices:</strong> " + result.choicePercent + "%<br><strong>Summary:</strong> " + result.written.percent + "%</div>",
+      missed.length ? "<div class=\"feedback needs-work\"><strong>Could strengthen:</strong>" + list(missed) + "</div>" : "<div class=\"feedback good\"><strong>Strong run:</strong> Your choices and summary matched the clinical priorities.</div>",
+      "<div class=\"feedback\"><strong>Model answer:</strong><br>" + escapeHtml(scenario.modelAnswer || "") + "</div>"
+    ].join("");
   }
 
   function renderErrorScenario(session, scenario) {
@@ -2618,7 +3159,7 @@
 
   function getScenarioMissedAreas(result) {
     if (!result) return [];
-    if (Array.isArray(result.missedAreas) && result.error) return result.missedAreas;
+    if (Array.isArray(result.missedAreas) && (result.error || result.choicePercent !== undefined)) return result.missedAreas;
     var missedGuided = result.guided ? result.guided.details.filter(function (item) {
       return !item.ok;
     }).map(function (item) {
@@ -3709,6 +4250,16 @@
       } }
     ]);
 
+    if (els.matchHistory) {
+      els.matchHistory.innerHTML = historyTable(profile.matchAttempts || [], [
+        { key: "date", label: "Date", render: formatDate },
+        { key: "title", label: "Dialogue" },
+        { key: "model", label: "Answer" },
+        { key: "selected", label: "Picked" },
+        { key: "scorePercent", label: "Score", render: function (value) { return value + "%"; } }
+      ]);
+    }
+
     els.scenarioHistory.innerHTML = historyTable(profile.scenarioAttempts || [], [
       { key: "date", label: "Date", render: formatDate },
       { key: "title", label: "Case" },
@@ -3746,6 +4297,7 @@
     var justified = getJustifiedMisses(profile).slice(0, 4);
     var readiness = getReadinessByArea(profile);
     var clinicAttempts = profile.clinicAttempts || [];
+    var matchAttempts = profile.matchAttempts || [];
     var lastClinic = clinicAttempts[0] || null;
     var weakest = readiness.length ? readiness.slice().sort(function (a, b) {
       return a.percent - b.percent || b.count - a.count;
@@ -3757,6 +4309,7 @@
       masteryMetric(due.length ? formatDue(due[0].dueAt) : "None", "Next review due"),
       masteryMetric(missed.length ? missed[0].topic : "--", "Most missed concept"),
       masteryMetric(String(justified.length), "Missed with justification"),
+      masteryMetric(String(matchAttempts.length), "Model matches"),
       masteryMetric(String(clinicAttempts.length), "Clinic rounds"),
       "</div>",
       readiness.length ? "<div class=\"readiness-list\">" + readiness.map(function (item) {
@@ -3794,6 +4347,7 @@
   function clearActiveProfile() {
     var profile = getProfile();
     profile.quizAttempts = [];
+    profile.matchAttempts = [];
     profile.scenarioAttempts = [];
     profile.skillAttempts = [];
     profile.clinicAttempts = [];
@@ -3801,6 +4355,7 @@
     profile.flashcardStats = {};
     profile.masteryStats = {};
     state.quiz = null;
+    state.match = null;
     state.scenario = null;
     state.skill = null;
     state.clinic = null;
@@ -3828,6 +4383,9 @@
       (attempt.missed || []).forEach(function (miss) {
         add(miss.model, miss.domain || domainForQuestion(miss), miss.topic);
       });
+    });
+    (profile.matchAttempts || []).forEach(function (attempt) {
+      if (!attempt.correct) add(attempt.model || "Model recognition", "Match the Model", attempt.model || "Model clues");
     });
     (profile.scenarioAttempts || []).forEach(function (attempt) {
       (attempt.missedAreas || []).forEach(function (area) {
@@ -4025,6 +4583,9 @@
       (attempt.answers || []).forEach(function (answer) {
         add(answer.domain || domainForQuestion(answer), answer.correct ? 100 : 0);
       });
+    });
+    (profile.matchAttempts || []).forEach(function (attempt) {
+      add("Model recognition", attempt.scorePercent || 0);
     });
     (profile.scenarioAttempts || []).forEach(function (attempt) {
       add(attempt.model || "Clinical cases", attempt.scorePercent || 0);

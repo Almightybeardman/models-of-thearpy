@@ -48,6 +48,10 @@
             <span class="nav-icon" aria-hidden="true">▤</span>
             <span>Study Guide</span>
           </button>
+          <button type="button" data-view-button="match">
+            <span class="nav-icon" aria-hidden="true">MM</span>
+            <span>Match the Model</span>
+          </button>
           <button type="button" data-view-button="quiz">
             <span class="nav-icon" aria-hidden="true">?</span>
             <span>Questionnaire</span>
@@ -150,6 +154,7 @@
           <div class="action-row">
             <button type="button" data-jump-view="clinic">Daily Clinic</button>
             <button type="button" data-jump-view="guide">Open Study Guide</button>
+            <button type="button" data-jump-view="match">Match the Model</button>
             <button type="button" data-jump-view="quiz">Start Questionnaire</button>
             <button type="button" data-jump-view="scenarios">Practice Scenarios</button>
             <button type="button" data-jump-view="skill">Skill Lab</button>
@@ -228,6 +233,35 @@
           <div class="guide-grid" id="guideGrid"></div>
         </section>
 
+        <section class="view" id="match" aria-labelledby="matchTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Recognition</p>
+              <h2 id="matchTitle">Match the Model</h2>
+              <p class="fine-print-left">Read a short therapy exchange, then identify the model or exam priority being shown.</p>
+            </div>
+            <form class="toolbar" id="matchSetup">
+              <label for="matchFocus">Focus</label>
+              <select id="matchFocus">
+                <option value="mixed">Mixed</option>
+                <option value="Bowen">Bowen</option>
+                <option value="EFT">EFT</option>
+                <option value="Ethics">Ethics</option>
+                <option value="Systemic Roles">Systemic Roles</option>
+              </select>
+              <button type="submit">New Dialogue</button>
+            </form>
+          </div>
+
+          <div class="match-layout">
+            <div class="practice-card" id="matchCard"></div>
+            <aside class="panel scenario-notes">
+              <h3>Recognition Run</h3>
+              <div id="matchScore"></div>
+            </aside>
+          </div>
+        </section>
+
         <section class="view" id="quiz" aria-labelledby="quizTitle">
           <div class="section-heading">
             <div>
@@ -291,6 +325,7 @@
               <label for="scenarioMode">Mode</label>
               <select id="scenarioMode">
                 <option value="combined" selected>Combined</option>
+                <option value="saynext">What To Say Next</option>
                 <option value="guided">Guided Choices</option>
                 <option value="written">Written Reflection</option>
                 <option value="error">Spot Therapist Error</option>
@@ -444,6 +479,10 @@
             <section class="panel">
               <h3>Questionnaire History</h3>
               <div id="quizHistory"></div>
+            </section>
+            <section class="panel">
+              <h3>Match the Model History</h3>
+              <div id="matchHistory"></div>
             </section>
             <section class="panel">
               <h3>Scenario History</h3>

@@ -4402,6 +4402,224 @@
     };
   }
 
+  function hardenQuestionBank(baseQuestions) {
+    return baseQuestions.map(function (question) {
+      var correct = question.choices[question.answerIndex];
+      var kind = getQuestionChoiceKind(question);
+      var pool = getHardDistractorPool(question, kind);
+      var used = {};
+      var nextWrongExplanations = question.wrongExplanations ? question.wrongExplanations.slice() : [];
+
+      question.choices.forEach(function (choice) {
+        used[normalizeChoice(choice)] = true;
+      });
+      used[normalizeChoice(correct)] = true;
+
+      var nextChoices = question.choices.map(function (choice, index) {
+        var candidate;
+        if (index === question.answerIndex) {
+          nextWrongExplanations[index] = "";
+          return choice;
+        }
+        candidate = takeHardDistractor(pool, used, correct);
+        if (!candidate) return choice;
+        nextWrongExplanations[index] = hardDistractorExplanation(question, candidate, correct);
+        return candidate;
+      });
+
+      return {
+        id: question.id,
+        model: question.model,
+        topic: question.topic,
+        difficulty: question.difficulty,
+        prompt: question.prompt,
+        choices: nextChoices,
+        answerIndex: question.answerIndex,
+        hint: question.hint,
+        explanation: question.explanation,
+        wrongExplanations: nextWrongExplanations
+      };
+    });
+  }
+
+  function getQuestionChoiceKind(question) {
+    var modelChoices = ["Bowen", "EFT", "Ethics", "Systemic Roles", "Structural/Systemic", "Narrative", "Solution-Focused", "Strategic"];
+    var correct = String(question.choices[question.answerIndex] || "");
+    var correctWords = correct.split(/\s+/).filter(Boolean).length;
+    var actionStart = /^(assess|address|balance|choose|clarify|coach|continue|explore|follow|form|identify|increase|link|map|move|prioritize|reflect|review|slow|support|track|use|verify)\b/i.test(correct);
+    var allModelChoices = question.choices.every(function (choice) {
+      return modelChoices.indexOf(choice) !== -1;
+    });
+    var shortChoices = question.choices.filter(function (choice) {
+      return String(choice).split(/\s+/).length <= 5;
+    }).length;
+    if (allModelChoices) return "model";
+    if (correctWords > 4 || actionStart) return "action";
+    if (shortChoices >= 3) return "term";
+    return "action";
+  }
+
+  function getHardDistractorPool(question, kind) {
+    if (kind === "model") {
+      return rotateChoices(["Bowen", "EFT", "Ethics", "Systemic Roles", "Structural/Systemic", "Solution-Focused", "Narrative", "Strategic"], question.id || question.prompt);
+    }
+    if (kind === "term") {
+      return getHardTermDistractors(question);
+    }
+    return getHardActionDistractors(question);
+  }
+
+  function getHardTermDistractors(question) {
+    var shared = [
+      "Circular causality",
+      "Systemic hypothesis",
+      "Balanced alliance",
+      "Client system assessment",
+      "Treatment-plan revision",
+      "Cultural/contextual assessment"
+    ];
+    var terms = {
+      "Bowen": [
+        "Differentiation of self",
+        "Emotional cutoff",
+        "Triangle",
+        "Family projection process",
+        "Multigenerational transmission",
+        "Sibling position",
+        "Societal emotional process",
+        "I-position coaching",
+        "Family diagram"
+      ],
+      "EFT": [
+        "Negative interaction cycle",
+        "Primary emotion",
+        "Secondary emotion",
+        "Attachment reframe",
+        "Enactment",
+        "Withdrawer re-engagement",
+        "Pursuer softening",
+        "Attachment injury repair",
+        "Corrective emotional experience"
+      ],
+      "Systemic Roles": shared.concat([
+        "Joining",
+        "Relational sequence",
+        "Scapegoating pattern",
+        "Assessment before intervention"
+      ]),
+      "Ethics": [
+        "Informed consent",
+        "Confidentiality limit",
+        "Mandated reporting",
+        "Duty to protect",
+        "Scope of competence",
+        "Multiple relationship",
+        "Documentation standard",
+        "Telehealth emergency planning",
+        "Continuity of care"
+      ],
+      "Comparison": [
+        "Bowen detriangling",
+        "EFT enactment",
+        "Ethics-first sequencing",
+        "Systemic assessment",
+        "Attachment reframe",
+        "Differentiation of self",
+        "Balanced alliance",
+        "Mandated reporting"
+      ]
+    };
+    return rotateChoices(terms[question.model] || [], question.id || question.prompt)
+      .concat(rotateChoices(shared, (question.id || question.prompt) + "-shared"));
+  }
+
+  function getHardActionDistractors(question) {
+    var pools = {
+      "Bowen": [
+        "Map the family process, but treat emotional distance as the same thing as differentiation",
+        "Use a genogram while postponing attention to the live triangle in the room",
+        "Coach an I-position after first deciding which family member is most responsible",
+        "Explore attachment vulnerability before clarifying the multigenerational anxiety pattern",
+        "Track the dyadic tension but let the therapist become the stabilizing third point",
+        "Encourage direct contact with family without first assessing reactivity, cutoff, or safety"
+      ],
+      "EFT": [
+        "Validate the feeling, then move quickly into problem solving before tracking the cycle",
+        "Invite a direct disclosure before assessing whether enough safety and regulation are present",
+        "Name the attachment need but skip how each partner's protective move maintains the cycle",
+        "Teach communication rules while leaving the primary emotion mostly unexplored",
+        "Use an enactment before slowing blame and protecting both partners' alliance",
+        "Focus on family-of-origin patterns before working with the live emotional process"
+      ],
+      "Systemic Roles": [
+        "Form a treatment hypothesis from the first person's report and broaden assessment later",
+        "Build alliance with the most distressed family member before balancing the client system",
+        "Choose a model technique before clarifying safety, culture, goals, and treatment frame",
+        "Focus on the identified client while noting relational context only after symptoms improve",
+        "Use a single linear explanation until the family provides enough details to revise it",
+        "Move directly to advice while leaving the interactional sequence mostly unassessed"
+      ],
+      "Ethics": [
+        "Continue the planned model intervention while documenting the concern for later review",
+        "Consult after the session but proceed now to preserve therapeutic momentum",
+        "Clarify consent or policy at the next appointment after stabilizing the alliance",
+        "Use clinical judgment without taking formal action until more proof is available",
+        "Handle the issue informally if the family appears cooperative and motivated",
+        "Return to ordinary treatment once the client verbally agrees the risk is manageable"
+      ],
+      "Comparison": [
+        "Choose the strongest model technique even though the stem raises sequencing concerns",
+        "Use Bowen process questions when the stem is primarily testing attachment vulnerability",
+        "Use an EFT enactment when the stem is primarily testing detriangling and self-definition",
+        "Treat ethics as relevant only after the preferred model intervention does not work",
+        "Start with systemic assessment but ignore the model-specific clue in the stem",
+        "Select the familiar intervention even though the timing is not clinically ready"
+      ]
+    };
+    return rotateChoices(pools[question.model] || pools.Comparison, question.id || question.prompt)
+      .concat(rotateChoices(pools.Comparison, (question.id || question.prompt) + "-comparison"));
+  }
+
+  function rotateChoices(items, seed) {
+    var offset = hashSeed(seed) % Math.max(1, items.length);
+    return items.slice(offset).concat(items.slice(0, offset));
+  }
+
+  function hashSeed(seed) {
+    var text = String(seed || "");
+    var hash = 0;
+    for (var index = 0; index < text.length; index += 1) {
+      hash = (hash * 31 + text.charCodeAt(index)) % 9973;
+    }
+    return hash;
+  }
+
+  function takeHardDistractor(pool, used, correct) {
+    var candidate;
+    while (pool.length) {
+      candidate = pool.shift();
+      if (normalizeChoice(candidate) !== normalizeChoice(correct) && !used[normalizeChoice(candidate)]) {
+        used[normalizeChoice(candidate)] = true;
+        return candidate;
+      }
+    }
+    return "";
+  }
+
+  function normalizeChoice(choice) {
+    return String(choice).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  }
+
+  function hardDistractorExplanation(question, candidate, correct) {
+    if (question.model === "Ethics") {
+      return "This is tempting because it acknowledges the clinical frame, but the stem requires a more complete ethics-first step before routine model work.";
+    }
+    if (question.model === "Comparison") {
+      return "This sounds plausible, but it follows the wrong model clue or misses the sequencing issue in the stem.";
+    }
+    return "This is a plausible nearby answer, but it is less precise than the stem clue. The best answer targets " + correct + ".";
+  }
+
   function basicChecklist() {
     return checklist("Validation", ["validate", "hear", "sounds", "makes sense"], "Non-blaming frame", ["cycle", "pattern", "not blame", "both"], "Primary emotion", ["hurt", "fear", "shame", "alone"], "Clinical next step", ["ask", "slow", "plan", "assess"]);
   }
@@ -4439,7 +4657,7 @@
     };
   }
 
-  questions = expandQuestionBank(questions);
+  questions = hardenQuestionBank(expandQuestionBank(questions));
   skillDrills = expandSkillDrills(skillDrills);
 
   window.STUDY_DATA = {

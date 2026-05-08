@@ -848,6 +848,7 @@ html[data-tone="dark"] .view-tabs button:not(.is-active):focus-visible {
 .scenario-layout,
 .skill-layout,
 .clinic-layout,
+.match-layout,
 .feedback-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 0.48fr);
@@ -1537,6 +1538,146 @@ html[data-tone="dark"] .term {
   background: #fff5f3;
 }
 
+.match-empty {
+  display: grid;
+  gap: 10px;
+}
+
+.match-empty p {
+  margin: 0;
+  color: var(--muted);
+  max-width: 620px;
+}
+
+.match-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 14px;
+}
+
+.match-head h3 {
+  margin: 0 0 6px;
+}
+
+.match-head p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.match-dialogue {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.match-turn {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fbfaf7;
+}
+
+.match-turn strong {
+  color: var(--muted);
+}
+
+.match-turn p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.match-question {
+  margin: 16px 0 10px;
+}
+
+.match-choice-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.match-choice {
+  width: 100%;
+  min-height: 48px;
+  justify-content: flex-start;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--ink);
+  text-align: left;
+}
+
+.match-choice:hover,
+.match-choice:focus-visible,
+.match-choice.is-selected {
+  background: var(--accent-soft);
+  border-color: var(--teal);
+}
+
+.match-choice.is-correct {
+  border-color: #b8cfaa;
+  background: #f3f9ef;
+}
+
+.match-choice.is-wrong {
+  border-color: #e2b9b4;
+  background: #fff5f3;
+}
+
+.what-next-progress {
+  margin: 14px 0;
+}
+
+.what-next-transcript {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.what-next-question {
+  margin: 16px 0 10px;
+}
+
+.what-next-choice-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.what-next-choice {
+  width: 100%;
+  min-height: 48px;
+  justify-content: flex-start;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--ink);
+  text-align: left;
+  line-height: 1.42;
+}
+
+.what-next-choice:hover,
+.what-next-choice:focus-visible {
+  background: var(--accent-soft);
+  border-color: var(--teal);
+}
+
+.what-next-summary {
+  display: grid;
+  gap: 10px;
+}
+
+.what-next-summary h3,
+.what-next-summary p {
+  margin: 0;
+}
+
 .sim-rewrite-label {
   display: block;
   margin-top: 14px;
@@ -1636,6 +1777,14 @@ html[data-tone="dark"] .skill-answer {
   color: var(--control-ink);
 }
 
+html[data-tone="dark"] .match-turn,
+html[data-tone="dark"] .match-choice,
+html[data-tone="dark"] .what-next-choice {
+  background: #101817;
+  color: var(--control-ink);
+  border-color: var(--border);
+}
+
 html[data-tone="dark"] .clinic-response {
   background: #101817;
   color: var(--control-ink);
@@ -1647,6 +1796,11 @@ html[data-tone="dark"] .clinic-client-line p {
 
 html[data-tone="dark"] .skill-answer:hover,
 html[data-tone="dark"] .skill-answer:focus-visible,
+html[data-tone="dark"] .match-choice:hover,
+html[data-tone="dark"] .match-choice:focus-visible,
+html[data-tone="dark"] .match-choice.is-selected,
+html[data-tone="dark"] .what-next-choice:hover,
+html[data-tone="dark"] .what-next-choice:focus-visible,
 html[data-tone="dark"] .clinic-response:hover,
 html[data-tone="dark"] .clinic-response:focus-visible {
   background: var(--accent-soft);
@@ -1654,6 +1808,7 @@ html[data-tone="dark"] .clinic-response:focus-visible {
 
 html[data-tone="dark"] .choice.is-correct,
 html[data-tone="dark"] .skill-answer.is-correct,
+html[data-tone="dark"] .match-choice.is-correct,
 html[data-tone="dark"] .clinic-response.is-correct,
 html[data-tone="dark"] .feedback.good,
 html[data-tone="dark"] .breakdown-item.good,
@@ -1663,6 +1818,7 @@ html[data-tone="dark"] .check-item.good {
 
 html[data-tone="dark"] .choice.is-wrong,
 html[data-tone="dark"] .skill-answer.is-wrong,
+html[data-tone="dark"] .match-choice.is-wrong,
 html[data-tone="dark"] .clinic-response.is-wrong,
 html[data-tone="dark"] .feedback.needs-work,
 html[data-tone="dark"] .breakdown-item.needs-work,
@@ -2528,6 +2684,7 @@ html[data-tone="dark"] .view-tabs button:not(.is-active):focus-visible {
 .scenario-layout,
 .skill-layout,
 .clinic-layout,
+.match-layout,
 .feedback-layout {
   grid-template-columns: minmax(0, 1fr) minmax(320px, 0.48fr);
   gap: 12px;
@@ -3487,6 +3644,49 @@ body {
   width: 100%;
 }
 
+.app-shell.is-content-wide .content-shell > main {
+  width: 100%;
+}
+
+.app-shell.is-content-wide #quiz .quiz-shell,
+.app-shell.is-content-wide #match .match-layout,
+.app-shell.is-content-wide #scenarios .scenario-layout,
+.app-shell.is-content-wide #skill .skill-layout,
+.app-shell.is-content-wide #progress .dashboard-layout {
+  width: 100%;
+}
+
+.app-shell.is-content-wide #match .match-layout,
+.app-shell.is-content-wide #scenarios .scenario-layout,
+.app-shell.is-content-wide #skill .skill-layout {
+  grid-template-columns: minmax(640px, 1fr) minmax(320px, 0.38fr);
+  align-items: start;
+}
+
+.app-shell.is-content-wide #progress .dashboard-layout {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  align-items: start;
+}
+
+.app-shell.is-content-wide #progress .mastery-panel {
+  grid-column: span 2;
+}
+
+.app-shell.is-content-wide #quiz .choice-list,
+.app-shell.is-content-wide #match .match-choice-grid,
+.app-shell.is-content-wide #scenarios .what-next-choice-grid,
+.app-shell.is-content-wide #skill .skill-answer-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.app-shell.is-content-wide #quiz .quiz-status,
+.app-shell.is-content-wide #quiz .practice-card,
+.app-shell.is-content-wide #match .practice-card,
+.app-shell.is-content-wide #scenarios .practice-card,
+.app-shell.is-content-wide #skill .practice-card {
+  width: 100%;
+}
+
 .app-shell.is-guide-wide #guide .guide-grid,
 .app-shell.is-guide-wide #guide .result-summary,
 .app-shell.is-guide-wide #guide .section-heading {
@@ -3817,6 +4017,9 @@ html[data-theme="paper"] .clinic-case-frame,
 html[data-theme="paper"] .clinic-client-line,
 html[data-theme="paper"] .clinic-response,
 html[data-theme="paper"] .choice,
+html[data-theme="paper"] .match-turn,
+html[data-theme="paper"] .match-choice,
+html[data-theme="paper"] .what-next-choice,
 html[data-theme="paper"] .skill-answer {
   color: var(--ink);
   background: var(--surface);
@@ -3843,6 +4046,9 @@ html[data-theme="paper"] .source-item span,
 html[data-theme="paper"] .path-step span,
 html[data-theme="paper"] .fine-print,
 html[data-theme="paper"] .fine-print-left,
+html[data-theme="paper"] .match-head p,
+html[data-theme="paper"] .match-empty p,
+html[data-theme="paper"] .match-turn strong,
 html[data-theme="paper"] .result-summary,
 html[data-theme="paper"] .guide-list-block h4,
 html[data-theme="paper"] .guide-main h4,
@@ -4013,4 +4219,34 @@ html[data-theme="paper"] .guide-terms .term span {
 html[data-theme="paper"] .guide-exam-watch,
 html[data-theme="paper"] .micro-drill {
   background: #fff8ee;
+}
+
+@media (max-width: 1100px) {
+  .app-shell.is-content-wide #match .match-layout,
+  .app-shell.is-content-wide #scenarios .scenario-layout,
+  .app-shell.is-content-wide #skill .skill-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell.is-content-wide #progress .mastery-panel {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-shell.is-content-wide #quiz .choice-list,
+  .app-shell.is-content-wide #match .match-choice-grid,
+  .app-shell.is-content-wide #scenarios .what-next-choice-grid,
+  .app-shell.is-content-wide #skill .skill-answer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .match-head,
+  .match-turn {
+    grid-template-columns: 1fr;
+  }
+
+  .match-head {
+    display: grid;
+  }
 }
