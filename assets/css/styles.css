@@ -3484,13 +3484,13 @@ body {
 }
 
 .app-shell.is-guide-wide .content-shell > main {
-  width: min(100%, 1840px);
+  width: 100%;
 }
 
 .app-shell.is-guide-wide #guide .guide-grid,
 .app-shell.is-guide-wide #guide .result-summary,
 .app-shell.is-guide-wide #guide .section-heading {
-  width: min(100%, 1500px);
+  width: 100%;
 }
 
 .app-shell.is-guide-wide #guide .guide-card {
@@ -3698,6 +3698,139 @@ html[data-tone="dark"] .source-item a {
   color: #6ff0d2 !important;
 }
 
+html[data-theme="paper"] .app-shell,
+html[data-theme="paper"] .app-shell.is-guide-wide {
+  --paper: #f3ede2;
+  --surface: #fffaf2;
+  --ink: #251f18;
+  --muted: #665b4d;
+  --border: #cdbfaa;
+  --border-soft: #d8cab5;
+  --teal: #1f766f;
+  --teal-dark: #15524d;
+  --accent-soft: #e8ded0;
+  --accent-border: #cdb89b;
+  --accent-contrast: #ffffff;
+  --control-bg: #fffaf2;
+  --control-ink: #251f18;
+  --control-border: #b9aa93;
+  --placeholder: #7a6e5f;
+  --button-bg: #1f766f;
+  --button-ink: #ffffff;
+  --button-hover: #15524d;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+html[data-theme="paper"] body,
+html[data-theme="paper"] .content-shell {
+  background: var(--paper);
+}
+
+html[data-theme="paper"] .content-crumb {
+  color: var(--muted);
+  background: #eee4d5;
+  border-bottom-color: var(--border);
+}
+
+html[data-theme="paper"] .app-sidebar,
+html[data-theme="paper"] .topbar-actions {
+  background: #eadfce;
+  border-color: var(--border);
+}
+
+html[data-theme="paper"] .brand h1,
+html[data-theme="paper"] .panel h3,
+html[data-theme="paper"] .practice-card h3,
+html[data-theme="paper"] .guide-card h3,
+html[data-theme="paper"] .view-tabs button:hover {
+  color: var(--ink);
+}
+
+html[data-theme="paper"] .brand p,
+html[data-theme="paper"] .view-tabs button,
+html[data-theme="paper"] .control-pair label,
+html[data-theme="paper"] .feedback-admin-tools label,
+html[data-theme="paper"] .feedback-grid label,
+html[data-theme="paper"] .feedback-meta-grid label {
+  color: var(--muted);
+}
+
+html[data-theme="paper"] .view-tabs button.is-active {
+  color: var(--teal-dark);
+  background: #dce9e4;
+  border-color: #b8d1ca;
+}
+
+html[data-theme="paper"] .nav-icon {
+  color: var(--teal-dark);
+}
+
+html[data-theme="paper"] .menu-toggle,
+html[data-theme="paper"] select,
+html[data-theme="paper"] input,
+html[data-theme="paper"] textarea,
+html[data-theme="paper"] .topbar-actions select,
+html[data-theme="paper"] .topbar-actions input {
+  color: var(--control-ink);
+  background: var(--control-bg);
+  border-color: var(--control-border);
+}
+
+html[data-theme="paper"] input::placeholder,
+html[data-theme="paper"] textarea::placeholder {
+  color: var(--placeholder);
+}
+
+html[data-theme="paper"] .menu-toggle span {
+  background: var(--ink);
+}
+
+html[data-theme="paper"] .stat-card,
+html[data-theme="paper"] .guide-card,
+html[data-theme="paper"] .panel,
+html[data-theme="paper"] .practice-card,
+html[data-theme="paper"] .feedback-item,
+html[data-theme="paper"] .quiz-question-card,
+html[data-theme="paper"] .scenario-group,
+html[data-theme="paper"] .case-detail,
+html[data-theme="paper"] .clinic-case-frame,
+html[data-theme="paper"] .clinic-client-line,
+html[data-theme="paper"] .clinic-response,
+html[data-theme="paper"] .choice,
+html[data-theme="paper"] .skill-answer {
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+html[data-theme="paper"] .source-item,
+html[data-theme="paper"] .focus-item,
+html[data-theme="paper"] .history-item,
+html[data-theme="paper"] .weak-item,
+html[data-theme="paper"] .empty-state,
+html[data-theme="paper"] .quiz-availability,
+html[data-theme="paper"] .guide-exam-watch,
+html[data-theme="paper"] .micro-drill,
+html[data-theme="paper"] .match-snippet,
+html[data-theme="paper"] .term,
+html[data-theme="paper"] .guide-terms .term {
+  color: var(--ink);
+  background: #fbf4e9;
+  border-color: var(--border);
+}
+
+html[data-theme="paper"] .source-item span,
+html[data-theme="paper"] .path-step span,
+html[data-theme="paper"] .fine-print,
+html[data-theme="paper"] .fine-print-left,
+html[data-theme="paper"] .result-summary,
+html[data-theme="paper"] .guide-list-block h4,
+html[data-theme="paper"] .guide-main h4,
+html[data-theme="paper"] .guide-terms h4 {
+  color: var(--muted);
+}
+
 .worksheet-intro {
   margin: 14px 0;
   padding: 12px 14px;
@@ -3840,4 +3973,25 @@ textarea {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+html[data-theme="paper"] .section-heading h2,
+html[data-theme="paper"] .content-crumb strong {
+  color: var(--ink);
+}
+
+html[data-theme="paper"] .guide-terms .term strong,
+html[data-theme="paper"] .guide-exam-watch strong,
+html[data-theme="paper"] .micro-drill strong,
+html[data-theme="paper"] .micro-drill summary {
+  color: var(--ink);
+}
+
+html[data-theme="paper"] .guide-terms .term span {
+  color: #4f6073;
+}
+
+html[data-theme="paper"] .guide-exam-watch,
+html[data-theme="paper"] .micro-drill {
+  background: #fff8ee;
 }
