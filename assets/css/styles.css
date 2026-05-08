@@ -847,6 +847,7 @@ html[data-tone="dark"] .view-tabs button:not(.is-active):focus-visible {
 .dashboard-layout,
 .scenario-layout,
 .skill-layout,
+.clinic-layout,
 .feedback-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 0.48fr);
@@ -942,6 +943,72 @@ html[data-tone="dark"] .view-tabs button:not(.is-active):focus-visible {
 .clinic-card {
   display: grid;
   gap: 12px;
+}
+
+.clinic-case-frame,
+.clinic-client-line,
+.clinic-response {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fbfaf7;
+}
+
+.clinic-case-frame {
+  display: grid;
+  gap: 10px;
+}
+
+.clinic-case-frame h3 {
+  margin: 0;
+}
+
+.clinic-client-line span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.clinic-client-line p {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.48;
+}
+
+.clinic-response-list {
+  display: grid;
+  gap: 8px;
+}
+
+.clinic-response {
+  width: 100%;
+  min-height: 48px;
+  color: var(--ink);
+  text-align: left;
+  line-height: 1.42;
+}
+
+.clinic-response:hover,
+.clinic-response:focus-visible {
+  border-color: var(--teal);
+  background: var(--accent-soft);
+}
+
+.clinic-response.is-selected {
+  border-color: var(--teal);
+  background: var(--accent-soft);
+}
+
+.clinic-response.is-correct {
+  border-color: #b8cfaa;
+  background: #f3f9ef;
+}
+
+.clinic-response.is-wrong {
+  border-color: #e2b9b4;
+  background: #fff5f3;
 }
 
 .clinic-card h4 {
@@ -1045,6 +1112,12 @@ html[data-tone="dark"] .focus-item,
 html[data-tone="dark"] .source-item,
 html[data-tone="dark"] .history-item,
 html[data-tone="dark"] .weak-item,
+html[data-tone="dark"] .skill-mode-grid div,
+html[data-tone="dark"] .skill-prompt,
+html[data-tone="dark"] .skill-score-stack div,
+html[data-tone="dark"] .clinic-case-frame,
+html[data-tone="dark"] .clinic-client-line,
+html[data-tone="dark"] .clinic-response,
 html[data-tone="dark"] .quiz-availability,
 html[data-tone="dark"] .feedback,
 html[data-tone="dark"] .scenario-group,
@@ -1336,6 +1409,150 @@ html[data-tone="dark"] .term {
   background: var(--teal);
 }
 
+.is-hidden-control {
+  display: none !important;
+}
+
+.skill-tabbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.skill-tabbar button {
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.skill-tabbar button.is-active {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--teal-dark);
+}
+
+.skill-welcome,
+.skill-prompt {
+  display: grid;
+  gap: 10px;
+}
+
+.skill-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 8px 0 2px;
+}
+
+.skill-mode-grid div,
+.skill-prompt,
+.skill-score-stack div {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fbfaf7;
+}
+
+.skill-mode-grid strong,
+.skill-mode-grid span,
+.skill-score-stack strong,
+.skill-score-stack span,
+.round-streak strong,
+.round-streak span {
+  display: block;
+}
+
+.skill-mode-grid span,
+.skill-score-stack span,
+.round-streak span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.skill-round-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.skill-round-head h3 {
+  margin-top: 0;
+}
+
+.round-streak {
+  min-width: 72px;
+  padding: 10px;
+  border: 1px solid var(--accent-border);
+  border-radius: 6px;
+  background: var(--accent-soft);
+  text-align: center;
+}
+
+.round-streak strong {
+  color: var(--teal-dark);
+  font-size: 1.3rem;
+}
+
+.skill-answer-grid {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.skill-answer {
+  width: 100%;
+  min-height: 48px;
+  justify-content: flex-start;
+  padding: 12px;
+  background: #ffffff;
+  color: var(--ink);
+  border: 1px solid var(--border);
+  text-align: left;
+  line-height: 1.42;
+}
+
+.skill-answer:hover,
+.skill-answer:focus-visible {
+  background: var(--accent-soft);
+  border-color: var(--teal);
+}
+
+.skill-answer.is-correct {
+  border-color: #b8cfaa;
+  background: #f3f9ef;
+}
+
+.skill-answer.is-wrong {
+  border-color: #e2b9b4;
+  background: #fff5f3;
+}
+
+.sim-rewrite-label {
+  display: block;
+  margin-top: 14px;
+  font-weight: 800;
+}
+
+.sim-rewrite {
+  min-height: 86px;
+  margin-top: 6px;
+}
+
+.skill-score-stack {
+  display: grid;
+  gap: 8px;
+}
+
 .question-meta,
 .case-meta,
 .skill-meta {
@@ -1414,7 +1631,30 @@ html[data-tone="dark"] .choice.is-selected {
   background: var(--accent-soft);
 }
 
+html[data-tone="dark"] .skill-answer {
+  background: #101817;
+  color: var(--control-ink);
+}
+
+html[data-tone="dark"] .clinic-response {
+  background: #101817;
+  color: var(--control-ink);
+}
+
+html[data-tone="dark"] .clinic-client-line p {
+  color: var(--control-ink);
+}
+
+html[data-tone="dark"] .skill-answer:hover,
+html[data-tone="dark"] .skill-answer:focus-visible,
+html[data-tone="dark"] .clinic-response:hover,
+html[data-tone="dark"] .clinic-response:focus-visible {
+  background: var(--accent-soft);
+}
+
 html[data-tone="dark"] .choice.is-correct,
+html[data-tone="dark"] .skill-answer.is-correct,
+html[data-tone="dark"] .clinic-response.is-correct,
 html[data-tone="dark"] .feedback.good,
 html[data-tone="dark"] .breakdown-item.good,
 html[data-tone="dark"] .check-item.good {
@@ -1422,6 +1662,8 @@ html[data-tone="dark"] .check-item.good {
 }
 
 html[data-tone="dark"] .choice.is-wrong,
+html[data-tone="dark"] .skill-answer.is-wrong,
+html[data-tone="dark"] .clinic-response.is-wrong,
 html[data-tone="dark"] .feedback.needs-work,
 html[data-tone="dark"] .breakdown-item.needs-work,
 html[data-tone="dark"] .check-item.needs-work,
@@ -1928,6 +2170,7 @@ th {
     .sync-grid,
     .scenario-layout,
     .skill-layout,
+    .clinic-layout,
     .feedback-layout,
     .feedback-grid,
     .feedback-meta-grid,
@@ -2284,6 +2527,7 @@ html[data-tone="dark"] .view-tabs button:not(.is-active):focus-visible {
 .dashboard-layout,
 .scenario-layout,
 .skill-layout,
+.clinic-layout,
 .feedback-layout {
   grid-template-columns: minmax(0, 1fr) minmax(320px, 0.48fr);
   gap: 12px;
@@ -2795,6 +3039,7 @@ td {
   .dashboard-layout,
   .scenario-layout,
   .skill-layout,
+  .clinic-layout,
   .feedback-layout {
     grid-template-columns: 1fr;
   }
@@ -3189,7 +3434,36 @@ body {
   border-bottom: 1px solid #27303d;
 }
 
-.content-crumb span:first-child {
+.menu-toggle {
+  width: 34px;
+  height: 34px;
+  margin-right: 4px;
+  padding: 0;
+  display: inline-grid;
+  place-content: center;
+  gap: 4px;
+  background: #141a23;
+  border: 1px solid #2e394a;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.menu-toggle span {
+  width: 15px;
+  height: 2px;
+  display: block;
+  background: #f7fbff;
+  border-radius: 2px;
+}
+
+.menu-toggle:hover,
+.menu-toggle:focus-visible {
+  background: #1b2330;
+  border-color: #3bd9aa;
+  transform: none;
+}
+
+#viewCrumbKicker {
   color: #39e4af;
   font-size: 0.74rem;
   font-weight: 900;
@@ -3207,6 +3481,21 @@ body {
   max-width: none;
   margin: 0;
   padding: 40px 32px 64px;
+}
+
+.app-shell.sidebar-collapsed,
+.app-shell.is-guide-wide.sidebar-collapsed {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+.app-sidebar {
+  width: 242px;
+  transition: transform 160ms ease;
+}
+
+.app-shell.sidebar-collapsed .app-sidebar {
+  transform: translateX(-100%);
+  pointer-events: none;
 }
 
 .view.is-active {
@@ -3336,6 +3625,82 @@ button.secondary:hover {
   background: #273451;
 }
 
+.guide-terms .term,
+html[data-tone="dark"] .guide-terms .term {
+  color: #eef6ff;
+  background: #101620;
+  border: 1px solid #2c384a;
+  border-left: 3px solid #d6a75d;
+}
+
+.guide-terms .term strong {
+  color: #ffffff;
+}
+
+.guide-terms .term span {
+  color: #c9d6e6;
+}
+
+.guide-exam-watch,
+.micro-drill,
+html[data-tone="dark"] .guide-exam-watch,
+html[data-tone="dark"] .micro-drill {
+  color: #dbe6f4;
+  background: #101620;
+  border-color: #2c384a;
+}
+
+.guide-exam-watch strong,
+.micro-drill strong,
+.micro-drill summary {
+  color: #ffffff;
+}
+
+.worksheet-intro {
+  margin: 14px 0;
+  padding: 12px 14px;
+  color: #c9d6e6;
+  background: #101620;
+  border: 1px solid #2c384a;
+  border-radius: 8px;
+}
+
+.worksheet-intro strong {
+  color: #ffffff;
+}
+
+.worksheet-intro p {
+  margin: 6px 0 0;
+}
+
+.skill-worksheet {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.worksheet-field {
+  display: grid;
+  gap: 7px;
+}
+
+.worksheet-field label {
+  color: #f7fbff;
+  font-weight: 900;
+}
+
+.worksheet-field p {
+  margin: 0;
+  color: #96a7bd;
+  font-size: 0.88rem;
+}
+
+.worksheet-field textarea {
+  min-height: 118px;
+  background: #0f1623;
+  border-color: #334054;
+}
+
 input,
 select,
 textarea {
@@ -3366,6 +3731,10 @@ textarea {
 
   .content-crumb {
     padding: 0 22px;
+  }
+
+  .app-sidebar {
+    width: 220px;
   }
 }
 

@@ -12,6 +12,7 @@
   var REVIEW_INTERVAL_DAYS = [0, 1, 3, 7];
   var VIEW_CHROME = {
     dashboard: { kicker: "TODAY", title: "Study Dashboard" },
+    clinic: { kicker: "SESSION", title: "Daily Clinic" },
     guide: { kicker: "REFERENCE", title: "Study Guide" },
     quiz: { kicker: "RECALL", title: "Questionnaire" },
     scenarios: { kicker: "APPLICATION", title: "Real Life Examples" },
@@ -62,12 +63,17 @@
     els.profileName = document.getElementById("profileName");
     els.themeSelect = document.getElementById("themeSelect");
     els.accentSelect = document.getElementById("accentSelect");
+    els.sidebarToggle = document.getElementById("sidebarToggle");
     els.viewCrumbKicker = document.getElementById("viewCrumbKicker");
     els.viewCrumbTitle = document.getElementById("viewCrumbTitle");
     els.syncPanelShell = document.getElementById("syncPanelShell");
     els.syncPanel = document.getElementById("syncPanel");
     els.dashboardStats = document.getElementById("dashboardStats");
+    els.clinicSetup = document.getElementById("clinicSetup");
+    els.clinicLevel = document.getElementById("clinicLevel");
+    els.clinicFocus = document.getElementById("clinicFocus");
     els.todayStudyPath = document.getElementById("todayStudyPath");
+    els.clinicCoach = document.getElementById("clinicCoach");
     els.focusQueue = document.getElementById("focusQueue");
     els.sourceList = document.getElementById("sourceList");
     els.guideFilter = document.getElementById("guideFilter");
@@ -97,6 +103,7 @@
     els.quizHistory = document.getElementById("quizHistory");
     els.scenarioHistory = document.getElementById("scenarioHistory");
     els.skillHistory = document.getElementById("skillHistory");
+    els.clinicHistory = document.getElementById("clinicHistory");
     els.masteryDashboard = document.getElementById("masteryDashboard");
     els.resetProfile = document.getElementById("resetProfile");
     els.practiceWeakNow = document.getElementById("practiceWeakNow");
@@ -121,14 +128,39 @@
     document.querySelectorAll("[data-view-button]").forEach(function (button) {
       button.addEventListener("click", function () {
         showView(button.getAttribute("data-view-button"));
+        setSidebarOpen(false);
       });
     });
 
     document.querySelectorAll("[data-jump-view]").forEach(function (button) {
       button.addEventListener("click", function () {
         showView(button.getAttribute("data-jump-view"));
+        setSidebarOpen(false);
       });
     });
+
+    if (els.sidebarToggle) {
+      els.sidebarToggle.addEventListener("click", function () {
+        var shell = document.querySelector(".app-shell");
+        setSidebarOpen(shell ? shell.classList.contains("sidebar-collapsed") : true);
+      });
+    }
+
+    document.querySelectorAll("[data-skill-tab]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        setSkillTab(button.getAttribute("data-skill-tab"));
+      });
+    });
+  }
+
+  function setSidebarOpen(isOpen) {
+    var shell = document.querySelector(".app-shell");
+    if (!shell) return;
+    shell.classList.toggle("sidebar-collapsed", !isOpen);
+    if (els.sidebarToggle) {
+      els.sidebarToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      els.sidebarToggle.setAttribute("aria-label", isOpen ? "Close menu" : "Open menu");
+    }
   }
 
   function showView(viewId) {
@@ -154,6 +186,9 @@
       if (state.feedbackAdminToken && state.feedbackItems.length === 0 && !state.feedbackAdminLoading) {
         loadFeedbackItems();
       }
+    }
+    if (viewId === "clinic") {
+      renderClinicHome();
     }
   }
 
@@ -206,6 +241,20 @@
     els.quizDifficulty.addEventListener("change", renderQuizAvailability);
     els.quizTopic.addEventListener("change", renderQuizAvailability);
     els.quizCount.addEventListener("change", renderQuizAvailability);
+
+    if (els.clinicSetup) {
+      els.clinicSetup.addEventListener("submit", function (event) {
+        event.preventDefault();
+        startDailyClinic(els.clinicLevel ? els.clinicLevel.value : "practice", clinicFocusTarget());
+      });
+    }
+    if (els.clinicLevel) {
+      els.clinicLevel.addEventListener("change", function () {
+        var profile = getProfile();
+        profile.settings.clinicLevel = normalizeClinicLevel(els.clinicLevel.value);
+        saveProfiles();
+      });
+    }
 
     els.scenarioSetup.addEventListener("submit", function (event) {
       event.preventDefault();
@@ -378,7 +427,7 @@
         clinicLevel: "practice",
         scenarioDifficulty: "mixed",
         scenarioMode: "combined",
-        skillMode: "modelCompare",
+        skillMode: "quick",
         skillDifficulty: "mixed"
       }
     };
@@ -399,7 +448,9 @@
     if (!normalized.settings.clinicLevel) normalized.settings.clinicLevel = "practice";
     if (!normalized.settings.scenarioDifficulty) normalized.settings.scenarioDifficulty = "mixed";
     if (!normalized.settings.scenarioMode) normalized.settings.scenarioMode = "combined";
-    if (!normalized.settings.skillMode) normalized.settings.skillMode = "modelCompare";
+    if (!normalized.settings.skillMode || ["quick", "simulator"].indexOf(normalized.settings.skillMode) === -1) {
+      normalized.settings.skillMode = "quick";
+    }
     if (!normalized.settings.skillDifficulty) normalized.settings.skillDifficulty = "mixed";
     return normalized;
   }
@@ -424,6 +475,7 @@
   function renderAll() {
     renderProfilePicker();
     renderDashboard();
+    renderClinicHome();
     renderGuide();
     renderQuizPlaceholder();
     renderScenarioPlaceholder();
@@ -488,7 +540,6 @@
       return "<div class=\"source-item\"><a href=\"" + escapeHtml(resource.url) + "\" target=\"_blank\" rel=\"noreferrer\">" + escapeHtml(resource.title) + "</a><br><span>" + escapeHtml(resource.note) + "</span></div>";
     }).join("");
 
-    renderTodayStudyPath(profile, missed);
   }
 
   function renderWeakSpotLabel(item) {
@@ -496,42 +547,51 @@
     return unique(parts).join(" -> ") || item.topic || "Review item";
   }
 
-  function renderTodayStudyPath(profile, missed) {
+  function renderClinicHome() {
     if (!els.todayStudyPath) return;
+    var profile = getProfile();
+    if (els.clinicLevel) {
+      els.clinicLevel.value = normalizeClinicLevel((profile.settings || {}).clinicLevel || "practice");
+    }
     if (state.clinic) {
       renderClinicSession();
       return;
     }
-    var level = profile.settings.clinicLevel || "practice";
+    var missed = getMissedTopics(profile);
+    var weakSpot = missed[0] ? renderWeakSpotLabel(missed[0]) : "Balanced starter session";
     var due = getDueReviewItems(profile);
-    var weakSpot = missed[0] ? renderWeakSpotLabel(missed[0]) : "Balanced starter clinic";
     els.todayStudyPath.innerHTML = [
       "<div class=\"clinic-start\">",
-      "<div class=\"clinic-start-copy\"><strong>Start Today's 5-Minute Clinic</strong><span>Five short rounds: recall, model spotting, case decision, due review, and supervisor notes.</span></div>",
-      "<div class=\"clinic-controls\"><label for=\"clinicLevel\">Level</label><select id=\"clinicLevel\"><option value=\"learn\">Learn</option><option value=\"practice\">Practice</option><option value=\"exam\">Exam</option></select><button type=\"button\" id=\"startDailyClinic\">Start Clinic</button></div>",
+      "<div class=\"clinic-start-copy\"><strong>Start a branching therapy session</strong><span>One client case unfolds across several turns. Choose the therapist response, see how the client reacts, and keep the session moving.</span></div>",
       "<div class=\"clinic-preview clinic-agenda\">",
-      "<div><em>Focus</em><strong>" + escapeHtml(weakSpot) + "</strong><span>Adaptive starting point</span></div>",
-      "<div><em>Review</em><strong>" + (due.length ? due.length + " due" : "Starter mix") + "</strong><span>" + (due.length ? "Waiting in spaced review" : "Balanced across models") + "</span></div>",
-      "<div><em>Rounds</em><strong>5 decisions</strong><span>Flashcards, cases, and feedback</span></div>",
+      "<div><em>Focus</em><strong>" + escapeHtml(weakSpot) + "</strong><span>Use Weak area to target this.</span></div>",
+      "<div><em>Format</em><strong>5-7 turns</strong><span>Choices first, rewrite after feedback.</span></div>",
+      "<div><em>Review</em><strong>" + (due.length ? due.length + " due" : "No due items") + "</strong><span>Clinic history still updates Progress.</span></div>",
       "</div>",
+      "<div class=\"button-row\"><button type=\"button\" id=\"startDailyClinicInline\">Start Session</button></div>",
       "</div>"
     ].join("");
-
-    var levelSelect = document.getElementById("clinicLevel");
-    if (levelSelect) {
-      levelSelect.value = level;
-      levelSelect.addEventListener("change", function () {
-        profile.settings.clinicLevel = levelSelect.value;
-        saveProfiles();
-      });
-    }
-    bindOptionalClick("startDailyClinic", function () {
-      startDailyClinic(levelSelect ? levelSelect.value : "practice");
+    renderClinicCoach();
+    bindOptionalClick("startDailyClinicInline", function () {
+      startDailyClinic(els.clinicLevel ? els.clinicLevel.value : "practice", clinicFocusTarget());
     });
   }
 
+  function clinicFocusTarget() {
+    var focus = els.clinicFocus ? els.clinicFocus.value : "balanced";
+    if (focus === "weak") {
+      var model = getWeakQuizModel(getProfile());
+      return model ? { model: model, topic: "" } : null;
+    }
+    if (focus && focus !== "balanced") {
+      return { model: focus, topic: "" };
+    }
+    return null;
+  }
+
   function startWeakSpotClinic(topic, model) {
-    showView("dashboard");
+    showView("clinic");
+    if (els.clinicFocus) els.clinicFocus.value = "weak";
     startDailyClinic((getProfile().settings || {}).clinicLevel || "practice", {
       topic: topic || "",
       model: model || ""
@@ -544,7 +604,7 @@
     profile.settings.clinicLevel = normalizedLevel;
     state.clinic = buildClinicSession(profile, normalizedLevel, targetWeak || null);
     saveProfiles();
-    renderDashboard();
+    renderClinicSession();
   }
 
   function normalizeClinicLevel(level) {
@@ -552,354 +612,284 @@
   }
 
   function buildClinicSession(profile, level, targetWeak) {
-    var used = {};
-    var items = [];
-    pickClinicFlashcards(profile, 2, targetWeak).forEach(function (card) {
-      if (!used[card.id]) {
-        used[card.id] = true;
-        items.push(clinicFlashcardItem(card, "flashcard"));
-      }
-    });
-    var spot = pickClinicDrill("spotModel", targetWeak, used);
-    if (spot) {
-      used[spot.id] = true;
-      items.push(clinicChoiceItem(spot, "clinicDrill"));
-    }
-    var showdown = pickClinicDrill("showdown", targetWeak, used);
-    if (showdown) {
-      used[showdown.id] = true;
-      items.push(clinicChoiceItem(showdown, "clinicDrill"));
-    }
-    var reviewItem = pickClinicReviewItem(profile, targetWeak, used);
-    if (reviewItem) {
-      used[reviewItem.id] = true;
-      items.push(reviewItem);
-    }
-    fillClinicItems(items, used, targetWeak);
+    var script = pickClinicSession(targetWeak);
     return {
       level: level,
       targetWeak: targetWeak || null,
-      items: items.slice(0, 5),
+      script: script,
       index: 0,
       answers: [],
+      alliance: 0,
       startedAt: new Date().toISOString(),
       completed: false,
       saved: false
     };
   }
 
-  function fillClinicItems(items, used, targetWeak) {
-    var cardPool = pickClinicFlashcards(getProfile(), 8, targetWeak);
-    cardPool.forEach(function (card) {
-      if (items.length >= 5 || used[card.id]) return;
-      used[card.id] = true;
-      items.push(clinicFlashcardItem(card, "flashcard"));
-    });
-    (DATA.clinicDrills || []).forEach(function (drill) {
-      if (items.length >= 5 || used[drill.id]) return;
-      used[drill.id] = true;
-      items.push(clinicChoiceItem(drill, "clinicDrill"));
-    });
+  function pickClinicSession(targetWeak) {
+    var sessions = clinicSessionScripts();
+    var target = targetWeak && targetWeak.model ? String(targetWeak.model).toLowerCase() : "";
+    var matches = target ? sessions.filter(function (session) {
+      return session.model.toLowerCase() === target || session.tags.join(" ").toLowerCase().indexOf(target) !== -1;
+    }) : [];
+    return shuffle(matches.length ? matches : sessions)[0];
   }
 
-  function pickClinicFlashcards(profile, count, targetWeak) {
-    var cards = DATA.flashcards || [];
-    var dueIds = getDueReviewItems(profile).filter(function (item) {
-      return item.kind === "flashcard";
-    }).map(function (item) { return item.id; });
-    var dueCards = dueIds.map(findFlashcard).filter(Boolean);
-    var weakCards = cards.filter(function (card) {
-      return matchesClinicTarget(card, targetWeak);
-    });
-    var ranked = dueCards.concat(weakCards, balancedClinicCards(cards));
-    var seen = {};
-    return ranked.filter(function (card) {
-      if (!card || seen[card.id]) return false;
-      seen[card.id] = true;
-      return true;
-    }).slice(0, count);
+  function clinicSessionScripts() {
+    return [
+      {
+        id: "clinic-session-eft-withdraw",
+        title: "The Evening Shutdown",
+        model: "EFT",
+        domain: "Systemic therapy models",
+        topic: "Negative Cycle",
+        clientSystem: "Couple",
+        presentingProblem: "A couple reports that every evening conversation turns into criticism and withdrawal.",
+        context: ["Both partners want the relationship to improve.", "No current violence is reported.", "One partner says they feel invisible; the other says they feel constantly failing."],
+        riskNotes: ["Screen for coercion and safety before deepening vulnerable emotion."],
+        openingLine: "Taylor says, 'I ask one question about why Jordan is late, and suddenly I am the villain. Jordan just stares at the floor.' Jordan replies, 'Because whatever I say turns into proof I do not care.'",
+        tags: ["EFT", "Cycle", "Primary Emotion"],
+        turns: [
+          clinicTurn("eft-1", "Joining", "Taylor looks at you and says, 'Can you please tell Jordan this is not normal?'", "What would you do next?", [
+            clinicChoice("Track the pattern without taking sides: 'I want to slow this down and understand what happens between you both when the question lands.'", 2, "Strong. You join both partners and move blame into process.", "Taylor exhales. Jordan looks up a little.", "Balanced alliance makes the room safer for deeper EFT work.", "Balanced alliance"),
+            clinicChoice("Tell Jordan they need to answer faster so Taylor feels reassured.", 0, "This sides with Taylor and turns the therapist into a judge.", "Jordan folds their arms and says, 'See, I knew this would happen.'", "Do not start by declaring one partner the problem.", "Side-taking"),
+            clinicChoice("Ask Taylor to stop using blaming words.", 1, "Partly useful, but it corrects before joining the distress.", "Taylor says, 'So I am the problem now?'", "Join the pain before coaching language.", "Premature correction")
+          ]),
+          clinicTurn("eft-2", "Cycle", "Jordan says, 'When I hear the questions, I go blank. I know anything I say will be wrong.'", "What would you do next?", [
+            clinicChoice("Reflect the withdrawer's protection and link it to the cycle.", 2, "Strong EFT move. You validate protection and organize the cycle.", "Jordan nods. Taylor says, 'I did not know it felt like that.'", "This opens the softer layer without blaming either partner.", "Cycle tracking"),
+            clinicChoice("Ask for a three-generation family diagram immediately.", 1, "A genogram may help later, but it misses the live EFT moment.", "Jordan answers politely but the emotional moment cools.", "Match the intervention to the model and moment.", "Model mismatch"),
+            clinicChoice("Move straight to problem-solving their evening schedule.", 0, "This skips the emotional process that maintains the fight.", "Taylor says, 'We already tried schedules. That is not the point.'", "Problem solving too early can leave the cycle untouched.", "Problem solving too early")
+          ]),
+          clinicTurn("eft-3", "Primary Emotion", "Taylor's voice softens: 'When Jordan goes quiet, I feel like I do not matter at all.'", "What would you do next?", [
+            clinicChoice("Validate and deepen the softer attachment fear.", 2, "Strong. You stay with the primary emotion under the protest.", "Taylor tears up. Jordan turns toward Taylor.", "This is the heart of EFT de-escalation.", "Primary emotion"),
+            clinicChoice("Warn Taylor that crying could manipulate Jordan.", 0, "This shames vulnerability and escalates the cycle.", "Taylor shuts down and Jordan looks angry.", "Do not pathologize softer emotion.", "Shaming vulnerability"),
+            clinicChoice("Ask Jordan to promise they will never be late again.", 1, "Reassurance sounds nice but avoids the attachment meaning.", "Jordan says, 'I cannot promise traffic will never happen.'", "Stay with meaning before contracts.", "Premature reassurance")
+          ]),
+          clinicTurn("eft-4", "Enactment Prep", "Jordan says quietly, 'I do care. I just feel like I fail before I start.'", "What would you do next?", [
+            clinicChoice("Shape a small, safe enactment from Jordan to Taylor.", 2, "Strong. The emotion is organized enough for direct contact.", "Jordan turns and says, 'I care, and I get scared I will disappoint you.'", "EFT enactments work when paced and emotionally organized.", "Enactment"),
+            clinicChoice("Tell Taylor to accept Jordan's apology and move on.", 0, "This rushes repair and silences Taylor's attachment fear.", "Taylor stiffens and says, 'That is not enough.'", "Do not force resolution before responsiveness.", "Forced resolution"),
+            clinicChoice("Switch topics because the room is emotional.", 1, "Pacing matters, but avoiding the moment loses momentum.", "Both partners quiet down but seem distant.", "Regulate without abandoning the process.", "Avoidance")
+          ]),
+          clinicTurn("eft-5", "Consolidation", "After the enactment, both partners are quieter. Taylor says, 'That felt different, but I am scared it will disappear when we go home.'", "What would you do next?", [
+            clinicChoice("Name the new interaction and plan a small between-session practice.", 2, "Strong close. You consolidate the new cycle and make it repeatable.", "Both partners agree to pause and name the cycle before arguing tonight.", "Consolidation turns a session moment into practice.", "Consolidation"),
+            clinicChoice("Say the problem is solved because they had one good moment.", 0, "This overstates progress and skips relapse planning.", "Taylor looks doubtful; Jordan withdraws again.", "Do not oversell one session moment.", "Overstating progress"),
+            clinicChoice("Assign a long communication worksheet without linking it to the cycle.", 1, "Homework can help, but it should connect to the live pattern.", "They agree, but the task feels generic.", "Make practice specific to the cycle.", "Generic homework")
+          ])
+        ]
+      },
+      {
+        id: "clinic-session-bowen-triangle",
+        title: "Caught Between Parents",
+        model: "Bowen",
+        domain: "Systemic therapy models",
+        topic: "Triangles",
+        clientSystem: "Adult family",
+        presentingProblem: "An adult son is pulled into his divorced parents' conflict and asks the therapist to tell him who is right.",
+        context: ["The client wants contact with both parents.", "Each parent pressures him for loyalty.", "The client reports anxiety before family calls."],
+        riskNotes: ["No immediate safety issue is stated; continue to monitor autonomy and pressure."],
+        openingLine: "Marcus says, 'My mom says I am betraying her if I answer Dad's calls. Dad says Mom is poisoning me. I need you to tell me what to do.'",
+        tags: ["Bowen", "Triangle", "Differentiation"],
+        turns: [
+          clinicTurn("bowen-1", "Detriangling", "Marcus leans forward: 'Seriously, whose side is healthier?'", "What would you do next?", [
+            clinicChoice("Refuse the judge role and help him observe the triangle.", 2, "Strong Bowen stance. You stay out of the triangle and shift to process.", "Marcus sighs, then says, 'So the pressure itself is part of it?'", "The therapist models detriangling.", "Detriangling"),
+            clinicChoice("Choose the parent who sounds less reactive.", 0, "This joins the triangle.", "Marcus says, 'I knew it. I will tell Dad you agree.'", "Do not become the third point in the conflict.", "Joining triangle"),
+            clinicChoice("Tell him to cut off both parents.", 0, "This prescribes cutoff instead of differentiation.", "Marcus looks alarmed: 'That seems extreme.'", "Bowen is not automatic no-contact advice.", "Cutoff confusion")
+          ]),
+          clinicTurn("bowen-2", "Process Questions", "Marcus says, 'Mom calls first, then Dad texts me, then I cannot sleep.'", "What would you do next?", [
+            clinicChoice("Ask process questions about sequence, timing, and his part.", 2, "Strong. Bowen work studies how anxiety moves through the system.", "Marcus maps the calls and notices he replies fastest when guilty.", "Process questions create observation under pressure.", "Process questions"),
+            clinicChoice("Ask him to role-play an emotional apology to both parents.", 1, "Possibly useful later, but the Bowen priority is observation and self-position.", "Marcus tries, but it becomes about pleasing them.", "Differentiate before performing repair.", "Model mismatch"),
+            clinicChoice("Tell him his parents are manipulative and should be confronted.", 0, "This escalates blame and reactivity.", "Marcus gets tense and starts defending both parents.", "Bowen lowers reactivity rather than intensifying blame.", "Blame")
+          ]),
+          clinicTurn("bowen-3", "I-position", "Marcus says, 'If I say no to Mom, she will fall apart.'", "What would you do next?", [
+            clinicChoice("Coach a calm I-position that respects connection without taking responsibility for her reaction.", 2, "Strong. This practices differentiation.", "Marcus says, 'I can say I love her and I am not discussing Dad tonight.'", "I-position is connected self-definition.", "I-position"),
+            clinicChoice("Tell him to reassure her until she calms down.", 0, "This supports overfunctioning.", "Marcus says, 'That is what I already do for hours.'", "Overfunctioning keeps the triangle alive.", "Overfunctioning"),
+            clinicChoice("Tell him not to care how she feels.", 0, "This confuses differentiation with emotional cutoff.", "Marcus pulls back: 'I do care, though.'", "Differentiation is not indifference.", "Cutoff")
+          ]),
+          clinicTurn("bowen-4", "Family Pattern", "He remembers being the messenger during his parents' marriage.", "What would you do next?", [
+            clinicChoice("Connect the current pressure to the multigenerational or long-term family pattern.", 2, "Strong. You widen the lens without blaming.", "Marcus says, 'I have had this job since I was ten.'", "Bowen tracks repeated roles across time.", "Family pattern"),
+            clinicChoice("Dismiss childhood history because he is an adult now.", 0, "This misses the repeated family process.", "Marcus looks confused and says, 'But it feels exactly the same.'", "History can reveal the emotional process.", "Ignoring history"),
+            clinicChoice("Ask which parent he loves more.", 0, "This intensifies the loyalty bind.", "Marcus becomes visibly anxious.", "Do not amplify the triangle.", "Loyalty bind")
+          ]),
+          clinicTurn("bowen-5", "Next Step", "Marcus wants a practical plan before the next family call.", "What would you do next?", [
+            clinicChoice("Plan one observable, less reactive contact experiment.", 2, "Strong. It is concrete and Bowen-consistent.", "Marcus chooses to wait ten minutes, breathe, and answer from an I-position.", "Small experiments build differentiation.", "Contact experiment"),
+            clinicChoice("Write a message for him to send word-for-word.", 1, "Structure helps, but taking over weakens his self-definition.", "Marcus asks you to make every wording decision.", "Coach the process; do not become the manager.", "Therapist overfunctioning"),
+            clinicChoice("Tell him to block everyone immediately.", 0, "This skips assessment and may reinforce cutoff.", "Marcus says, 'That would blow everything up.'", "Boundaries should fit goals, safety, and autonomy.", "Premature cutoff")
+          ])
+        ]
+      },
+      {
+        id: "clinic-session-ethics-safety",
+        title: "Before Couple Work",
+        model: "Ethics",
+        domain: "Crisis and risk",
+        topic: "Safety Before Technique",
+        clientSystem: "Couple",
+        presentingProblem: "A couple requests EFT work, but one partner hints that arguments become scary at home.",
+        context: ["The couple asks for communication exercises.", "One partner looks to the other before answering safety questions.", "The therapist has not completed private screening."],
+        riskNotes: ["Possible coercion or retaliation risk. Safety and appropriateness of conjoint work come first."],
+        openingLine: "Avery says, 'We just need tools to stop fighting.' Sam quietly adds, 'Sometimes it gets scary,' then glances at Avery and stops talking.",
+        tags: ["Ethics", "Safety", "Consent"],
+        turns: [
+          clinicTurn("ethics-1", "Safety Signal", "Avery says, 'Do not make this dramatic. Can we just do the exercise?'", "What would you do next?", [
+            clinicChoice("Pause routine couple work and clarify safety before technique.", 2, "Strong. Safety overrides model technique.", "Sam looks relieved. Avery looks frustrated but stays seated.", "Risk signals require careful assessment.", "Safety assessment"),
+            clinicChoice("Start an enactment so they can speak honestly.", 0, "Unsafe. Enactments can increase danger when coercion may be present.", "Sam stops talking completely.", "Model fidelity never outranks safety.", "Unsafe enactment"),
+            clinicChoice("Ask Avery to define what scary means for Sam.", 0, "This may expose Sam to retaliation or pressure.", "Sam shakes their head slightly.", "Do not make the possibly unsafe partner answer through the other partner.", "Unsafe questioning")
+          ]),
+          clinicTurn("ethics-2", "Private Screening", "You need more information about safety and coercion.", "What would you do next?", [
+            clinicChoice("Explain the frame and arrange careful individual check-ins or screening.", 2, "Strong. You preserve safety and informed consent.", "Both partners hear the same rationale; Sam agrees to speak individually.", "Private screening can be clinically necessary.", "Private screening"),
+            clinicChoice("Secretly text Sam later without explaining the frame.", 0, "This creates a confidentiality and records problem.", "The treatment frame becomes muddier.", "Be transparent about process and documentation.", "Confidentiality frame"),
+            clinicChoice("Continue conjoint work but promise not to document the concern.", 0, "This is poor records practice and may increase risk.", "Sam looks more anxious.", "Risk concerns require appropriate documentation.", "Documentation")
+          ]),
+          clinicTurn("ethics-3", "Disclosure", "In a private check-in, Sam says Avery has punched walls and blocked the doorway during fights.", "What would you do next?", [
+            clinicChoice("Assess immediate danger, coercive control, protective factors, and safe next steps.", 2, "Strong. You assess before deciding the treatment format.", "Sam describes a place they can go tonight if needed.", "Safety planning and level of care come before couple technique.", "Risk assessment"),
+            clinicChoice("Tell Sam to confront Avery in the next conjoint session.", 0, "This could increase danger.", "Sam says, 'Please do not make me say that in front of Avery.'", "Avoid interventions that increase retaliation risk.", "Retaliation risk"),
+            clinicChoice("Assume it is not abuse because no one was hit.", 0, "Blocking exits and intimidation can be serious safety data.", "Sam becomes quiet and guarded.", "Do not minimize coercive behavior.", "Minimizing risk")
+          ]),
+          clinicTurn("ethics-4", "Treatment Format", "Sam asks, 'Does this mean couples therapy is over?'", "What would you do next?", [
+            clinicChoice("Explain that conjoint work depends on safety and may need referral, safety planning, or individual resources first.", 2, "Strong. You answer clearly without overpromising.", "Sam says, 'That makes sense. I need to think about safety first.'", "Appropriateness of conjoint therapy is a clinical decision.", "Conjoint appropriateness"),
+            clinicChoice("Guarantee the relationship can be saved if they practice skills.", 0, "This overpromises and ignores safety.", "Sam looks doubtful.", "Do not sell technique when safety is unresolved.", "Overpromising"),
+            clinicChoice("Immediately terminate without referral or planning.", 1, "Ending may be needed, but abrupt termination can abandon safety needs.", "Sam asks what to do next.", "Plan continuity and referrals.", "Continuity")
+          ]),
+          clinicTurn("ethics-5", "Documentation", "You have assessed risk and made a safety plan.", "What would you do next?", [
+            clinicChoice("Document assessment, rationale, plan, consultation, and follow-up.", 2, "Strong. Risk decisions need clear records.", "The session closes with a concrete follow-up plan.", "Documentation supports continuity and clinical reasoning.", "Documentation"),
+            clinicChoice("Document only 'couple communication issues' to avoid sensitive details.", 0, "Too vague for risk reasoning.", "Important clinical data is missing from the record.", "Records should be accurate and clinically appropriate.", "Vague documentation"),
+            clinicChoice("Let the clients decide whether risk should be in the record.", 0, "Clients have rights, but clinical records must remain accurate.", "The record becomes clinically unreliable.", "Do not delete relevant risk data.", "Record accuracy")
+          ])
+        ]
+      }
+    ];
   }
 
-  function balancedClinicCards(cards) {
-    var models = ["Bowen", "EFT", "Ethics", "Systemic Roles", "Comparison"];
-    var ordered = [];
-    models.forEach(function (model) {
-      var match = cards.find(function (card) { return card.model === model; });
-      if (match) ordered.push(match);
-    });
-    return ordered.concat(shuffle(cards));
+  function clinicTurn(id, phase, clientLine, prompt, choices) {
+    return { id: id, phase: phase, clientLine: clientLine, prompt: prompt, choices: choices };
   }
 
-  function pickClinicDrill(type, targetWeak, used) {
-    var drills = (DATA.clinicDrills || []).filter(function (drill) {
-      return drill.type === type && !used[drill.id];
-    });
-    var targeted = drills.filter(function (drill) {
-      return matchesClinicTarget(drill, targetWeak);
-    });
-    return shuffle(targeted.length ? targeted : drills)[0] || null;
-  }
-
-  function pickClinicReviewItem(profile, targetWeak, used) {
-    var due = getDueReviewItems(profile);
-    for (var i = 0; i < due.length; i += 1) {
-      var item = clinicItemFromReview(due[i]);
-      if (item && !used[item.id]) return item;
-    }
-    var missedQuiz = findRecentMissedQuiz(profile, targetWeak);
-    if (missedQuiz && !used[missedQuiz.id]) return missedQuiz;
-    var fallbackCard = pickClinicFlashcards(profile, 1, targetWeak).filter(function (card) {
-      return !used[card.id];
-    })[0];
-    return fallbackCard ? clinicFlashcardItem(fallbackCard, "reviewFallback") : null;
-  }
-
-  function clinicItemFromReview(review) {
-    if (!review) return null;
-    if (review.kind === "flashcard") {
-      var card = findFlashcard(review.id);
-      return card ? clinicFlashcardItem(card, "dueReview") : null;
-    }
-    if (review.kind === "clinicDrill") {
-      var drill = findClinicDrill(review.id);
-      return drill ? clinicChoiceItem(drill, "dueReview") : null;
-    }
-    if (review.kind === "quiz") {
-      var question = findQuestion(review.id);
-      return question ? clinicQuestionItem(question, "dueReview") : null;
-    }
-    return null;
-  }
-
-  function findRecentMissedQuiz(profile, targetWeak) {
-    var missed = [];
-    (profile.quizAttempts || []).forEach(function (attempt) {
-      (attempt.missed || []).forEach(function (answer) {
-        var question = findQuestion(answer.questionId);
-        if (question) missed.push(question);
-      });
-    });
-    var targeted = missed.filter(function (question) {
-      return matchesClinicTarget(question, targetWeak);
-    });
-    var question = shuffle(targeted.length ? targeted : missed)[0];
-    return question ? clinicQuestionItem(question, "missedQuiz") : null;
-  }
-
-  function clinicFlashcardItem(card, source) {
+  function clinicChoice(text, score, feedback, clientFollowup, supervisorNote, missedArea) {
     return {
-      type: "flashcard",
-      sourceKind: source,
-      id: card.id,
-      model: card.model,
-      domain: card.domain,
-      topic: card.topic,
-      title: labelForFlashcardType(card.type),
-      prompt: card.front,
-      answer: card.back,
-      clue: card.clue,
-      whyBest: card.why,
-      clinicalCaution: card.clinicalCaution,
-      reviewNext: card.reviewNext
-    };
-  }
-
-  function clinicChoiceItem(drill, source) {
-    var order = shuffle(drill.choices.map(function (_, index) { return index; }));
-    return {
-      type: drill.type,
-      sourceKind: source,
-      id: drill.id,
-      model: drill.model,
-      domain: drill.domain,
-      topic: drill.topic,
-      difficulty: drill.difficulty,
-      title: drill.type === "spotModel" ? "Spot the Model" : "Therapist Response Showdown",
-      prompt: drill.prompt,
-      choices: order.map(function (index) { return drill.choices[index]; }),
-      wrongExplanations: order.map(function (index) { return drill.wrongExplanations[index] || ""; }),
-      answerIndex: order.indexOf(drill.answerIndex),
-      clue: drill.clue,
-      whyBest: drill.explanation,
-      clinicalCaution: drill.clinicalCaution,
-      reviewNext: drill.reviewNext
-    };
-  }
-
-  function clinicQuestionItem(question, source) {
-    var prepared = prepareQuizQuestion(question);
-    return {
-      type: "quizReview",
-      sourceKind: source,
-      id: prepared.id,
-      model: prepared.model,
-      domain: prepared.domain,
-      topic: prepared.topic,
-      difficulty: prepared.difficulty,
-      title: "Spaced Review",
-      prompt: prepared.prompt,
-      choices: prepared.choices,
-      wrongExplanations: prepared.wrongExplanations,
-      answerIndex: prepared.answerIndex,
-      clue: prepared.hint,
-      whyBest: prepared.explanation,
-      clinicalCaution: "Use current law, ethics codes, supervision, and official exam materials for clinical decisions.",
-      reviewNext: reviewNextText(prepared)
+      text: text,
+      score: score,
+      feedback: feedback,
+      clientFollowup: clientFollowup,
+      supervisorNote: supervisorNote,
+      missedArea: missedArea
     };
   }
 
   function renderClinicSession() {
     var clinic = state.clinic;
-    if (!clinic) return;
-    if (clinic.completed || clinic.index >= clinic.items.length) {
+    if (!clinic) {
+      renderClinicHome();
+      return;
+    }
+    if (clinic.completed || clinic.index >= clinic.script.turns.length) {
       renderClinicSummary();
       return;
     }
-    var item = clinic.items[clinic.index];
-    var progress = Math.round((clinic.index / clinic.items.length) * 100);
+    var turn = clinic.script.turns[clinic.index];
+    var progress = Math.round((clinic.index / clinic.script.turns.length) * 100);
     els.todayStudyPath.innerHTML = [
       "<div class=\"clinic-session\">",
-      "<div class=\"clinic-session-head\"><strong>Clinic round " + (clinic.index + 1) + " of " + clinic.items.length + "</strong><span>" + escapeHtml(labelForClinicLevel(clinic.level)) + "</span></div>",
+      "<div class=\"clinic-session-head\"><strong>Turn " + (clinic.index + 1) + " of " + clinic.script.turns.length + "</strong><span>" + escapeHtml(labelForClinicLevel(clinic.level)) + "</span></div>",
       "<div class=\"progress-bar\" aria-label=\"Daily Clinic progress\"><span style=\"width:" + progress + "%\"></span></div>",
-      item.type === "flashcard" ? renderClinicFlashcard(item, clinic) : renderClinicChoice(item, clinic),
+      renderClinicCaseFrame(clinic),
+      renderClinicTurn(turn),
       "</div>"
     ].join("");
-    bindClinicControls(item, clinic);
+    renderClinicCoach();
+    bindClinicControls(turn, clinic);
   }
 
-  function renderClinicFlashcard(item, clinic) {
-    var showAnswer = clinic.level === "learn" || item.revealed || item.completed;
+  function renderClinicCaseFrame(clinic) {
+    var script = clinic.script;
     return [
-      "<div class=\"clinic-card\">",
-      renderClinicMeta(item),
-      "<h4>" + escapeHtml(item.prompt) + "</h4>",
-      clinic.level === "learn" ? "<div class=\"feedback\"><strong>Clue:</strong> " + escapeHtml(item.clue) + "</div>" : "",
-      showAnswer ? "<div class=\"clinic-answer\"><span>Answer</span><p>" + escapeHtml(item.answer) + "</p></div>" : "",
-      item.completed && clinic.level !== "exam" ? renderClinicFeedback(item.answerRecord) : "",
-      "<div class=\"button-row\">",
-      !showAnswer ? "<button type=\"button\" id=\"clinicReveal\">Reveal Answer</button>" : "",
-      showAnswer && !item.completed ? "<button type=\"button\" id=\"clinicGotIt\">Got It</button><button class=\"secondary\" type=\"button\" id=\"clinicMissedIt\">Missed It</button>" : "",
-      item.completed ? "<button type=\"button\" id=\"clinicNext\">" + (clinic.index === clinic.items.length - 1 ? "Finish Clinic" : "Next Round") + "</button>" : "",
-      "<button class=\"secondary\" type=\"button\" id=\"clinicStop\">Stop</button>",
-      "</div>",
+      "<div class=\"clinic-case-frame\">",
+      "<div class=\"skill-meta\"><span class=\"tag\">" + escapeHtml(script.model) + "</span><span class=\"tag\">" + escapeHtml(script.clientSystem) + "</span><span class=\"tag\">" + escapeHtml(script.topic) + "</span></div>",
+      "<h3>" + escapeHtml(script.title) + "</h3>",
+      "<p><strong>Presenting problem:</strong> " + escapeHtml(script.presentingProblem) + "</p>",
+      "<div class=\"case-detail-grid\"><div class=\"case-detail\"><strong>Context</strong>" + list(script.context) + "</div><div class=\"case-detail alert\"><strong>Risk / ethics</strong>" + list(script.riskNotes) + "</div></div>",
+      clinic.index === 0 ? "<div class=\"clinic-client-line\"><span>Client opens</span><p>" + escapeHtml(script.openingLine) + "</p></div>" : "",
       "</div>"
     ].join("");
   }
 
-  function renderClinicChoice(item, clinic) {
-    var showFeedback = item.completed && clinic.level !== "exam";
-    var choices = item.choices.map(function (choice, index) {
-      var classNames = ["choice"];
-      if (item.selectedIndex === index) classNames.push("is-selected");
-      if (showFeedback && index === item.answerIndex) classNames.push("is-correct");
-      if (showFeedback && item.selectedIndex === index && index !== item.answerIndex) classNames.push("is-wrong");
-      return "<label class=\"" + classNames.join(" ") + "\"><input type=\"radio\" name=\"clinicChoice\" value=\"" + index + "\"" + (item.selectedIndex === index ? " checked" : "") + (item.completed ? " disabled" : "") + "><span>" + escapeHtml(choice) + "</span></label>";
+  function renderClinicTurn(turn) {
+    var choices = turn.choices.map(function (choice, index) {
+      var classNames = ["clinic-response"];
+      if (turn.completed && turn.selectedIndex === index) classNames.push("is-selected");
+      if (turn.completed && choice.score === 2) classNames.push("is-correct");
+      if (turn.completed && turn.selectedIndex === index && choice.score === 0) classNames.push("is-wrong");
+      return "<button class=\"" + classNames.join(" ") + "\" type=\"button\" data-clinic-choice=\"" + index + "\"" + (turn.completed ? " disabled" : "") + ">" + escapeHtml(choice.text) + "</button>";
     }).join("");
     return [
       "<div class=\"clinic-card\">",
-      renderClinicMeta(item),
-      "<h4>" + escapeHtml(item.prompt) + "</h4>",
-      clinic.level === "learn" || item.hintShown ? "<div class=\"feedback\"><strong>Clue:</strong> " + escapeHtml(item.clue) + "</div>" : "",
-      "<div class=\"choice-list\">" + choices + "</div>",
-      showFeedback ? renderClinicFeedback(item.answerRecord) : "",
+      "<div class=\"skill-meta\"><span class=\"tag\">" + escapeHtml(turn.phase) + "</span><span class=\"tag\">Role play</span></div>",
+      "<div class=\"clinic-client-line\"><span>Client says</span><p>" + escapeHtml(turn.clientLine) + "</p></div>",
+      "<h4>" + escapeHtml(turn.prompt) + "</h4>",
+      "<div class=\"clinic-response-list\">" + choices + "</div>",
+      turn.completed ? renderClinicFeedback(turn.answerRecord) : "",
+      turn.completed ? "<label class=\"sim-rewrite-label\" for=\"clinicRewrite\">Try a stronger line</label><textarea id=\"clinicRewrite\" class=\"sim-rewrite\" data-clinic-rewrite placeholder=\"Optional: write the therapist line you would use now.\">" + escapeHtml(turn.rewrite || "") + "</textarea>" : "",
       "<div class=\"button-row\">",
-      !item.completed ? "<button type=\"button\" id=\"clinicSubmit\">Submit</button>" : "",
-      !item.completed && clinic.level === "practice" && !item.hintShown ? "<button class=\"secondary\" type=\"button\" id=\"clinicHint\">Hint</button>" : "",
-      item.completed ? "<button type=\"button\" id=\"clinicNext\">" + (clinic.index === clinic.items.length - 1 ? "Finish Clinic" : "Next Round") + "</button>" : "",
+      turn.completed ? "<button type=\"button\" id=\"clinicNext\">" + (state.clinic && state.clinic.index === state.clinic.script.turns.length - 1 ? "Finish Session" : "Next Client Response") + "</button>" : "",
       "<button class=\"secondary\" type=\"button\" id=\"clinicStop\">Stop</button>",
       "</div>",
       "</div>"
     ].join("");
   }
 
-  function renderClinicMeta(item) {
-    return "<div class=\"question-meta\"><span class=\"tag\">" + escapeHtml(item.title || item.type) + "</span><span class=\"tag\">" + escapeHtml(item.model) + "</span><span class=\"tag\">" + escapeHtml(item.topic) + "</span></div>";
-  }
-
-  function bindClinicControls(item, clinic) {
-    els.todayStudyPath.querySelectorAll("input[name=\"clinicChoice\"]").forEach(function (input) {
-      input.addEventListener("change", function () {
-        item.selectedIndex = Number(input.value);
-        renderClinicSession();
+  function bindClinicControls(turn, clinic) {
+    els.todayStudyPath.querySelectorAll("[data-clinic-choice]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        completeClinicChoice(turn, Number(button.getAttribute("data-clinic-choice")));
       });
     });
-    bindOptionalClick("clinicReveal", function () {
-      item.revealed = true;
-      renderClinicSession();
-    });
-    bindOptionalClick("clinicGotIt", function () {
-      completeClinicFlashcard(item, true);
-    });
-    bindOptionalClick("clinicMissedIt", function () {
-      completeClinicFlashcard(item, false);
-    });
-    bindOptionalClick("clinicSubmit", function () {
-      if (item.selectedIndex === undefined || item.selectedIndex === null) return;
-      completeClinicChoice(item);
-    });
-    bindOptionalClick("clinicHint", function () {
-      item.hintShown = true;
-      renderClinicSession();
-    });
+    var rewrite = document.getElementById("clinicRewrite");
+    if (rewrite) {
+      rewrite.addEventListener("input", function () {
+        turn.rewrite = rewrite.value;
+        if (turn.answerRecord) turn.answerRecord.rewrite = rewrite.value;
+      });
+    }
     bindOptionalClick("clinicNext", function () {
       clinic.index += 1;
       renderClinicSession();
     });
     bindOptionalClick("clinicStop", function () {
       state.clinic = null;
-      renderDashboard();
+      renderClinicHome();
     });
   }
 
-  function completeClinicFlashcard(item, correct) {
-    if (item.completed) return;
+  function completeClinicChoice(turn, selectedIndex) {
+    if (turn.completed) return;
+    var clinic = state.clinic;
+    var script = clinic.script;
+    var choice = turn.choices[selectedIndex];
+    var best = turn.choices.filter(function (candidate) { return candidate.score === 2; })[0] || choice;
     var answer = {
-      type: "flashcard",
-      id: item.id,
-      model: item.model,
-      domain: item.domain,
-      topic: item.topic,
-      prompt: item.prompt,
-      correct: correct,
-      selectedChoice: correct ? "Self-graded: got it" : "Self-graded: missed it",
-      correctChoice: item.answer,
-      clue: item.clue,
-      whyBest: item.whyBest,
-      whyTempting: correct ? "" : "The card needs another retrieval pass before it gets easier.",
-      clinicalCaution: item.clinicalCaution,
-      reviewNext: item.reviewNext,
+      type: "rolePlay",
+      id: script.id + "-" + turn.id,
+      model: script.model,
+      domain: script.domain,
+      topic: choice.missedArea || script.topic,
+      prompt: turn.clientLine,
+      correct: choice.score === 2,
+      score: choice.score,
+      selectedIndex: selectedIndex,
+      selectedChoice: choice.text,
+      correctChoice: best.text,
+      whyBest: choice.feedback,
+      whyTempting: choice.score === 2 ? "" : "This missed or softened the key clinical priority for this turn.",
+      clientFollowup: choice.clientFollowup,
+      supervisorNote: choice.supervisorNote,
+      clinicalCaution: script.riskNotes.join(" "),
+      reviewNext: choice.missedArea || script.topic,
       answeredAt: new Date().toISOString()
     };
-    item.completed = true;
-    item.answerRecord = answer;
-    recordClinicAnswer(answer, item);
-    renderClinicSession();
-  }
-
-  function completeClinicChoice(item) {
-    if (item.completed) return;
-    var correct = item.selectedIndex === item.answerIndex;
-    var answer = {
-      type: item.type,
-      id: item.id,
-      model: item.model,
-      domain: item.domain,
-      topic: item.topic,
-      prompt: item.prompt,
-      correct: correct,
-      selectedIndex: item.selectedIndex,
-      selectedChoice: item.choices[item.selectedIndex],
-      correctChoice: item.choices[item.answerIndex],
-      clue: item.clue,
-      whyBest: item.whyBest,
-      whyTempting: correct ? "" : item.wrongExplanations[item.selectedIndex] || "This choice sounds plausible, but it misses the main stem clue.",
-      clinicalCaution: item.clinicalCaution,
-      reviewNext: item.reviewNext,
-      answeredAt: new Date().toISOString()
-    };
-    item.completed = true;
-    item.answerRecord = answer;
-    recordClinicAnswer(answer, item);
+    turn.selectedIndex = selectedIndex;
+    turn.completed = true;
+    turn.answerRecord = answer;
+    clinic.alliance += choice.score - 1;
+    recordClinicAnswer(answer, turn);
     renderClinicSession();
   }
 
@@ -907,12 +897,7 @@
     var profile = getProfile();
     var clinic = state.clinic;
     clinic.answers.push(answer);
-    if (answer.type === "flashcard") {
-      updateFlashcardStats(profile, answer);
-      updateReviewFromFlashcardAnswer(profile, answer);
-    } else {
-      updateReviewFromClinicDrillAnswer(profile, answer, item);
-    }
+    updateReviewFromClinicDrillAnswer(profile, answer, item);
     saveProfiles();
   }
 
@@ -920,15 +905,39 @@
     if (!answer) return "";
     return [
       "<div class=\"feedback " + (answer.correct ? "good" : "needs-work") + "\">",
-      "<strong>" + (answer.correct ? "Supervisor feedback: strong." : "Supervisor feedback: review this.") + "</strong>",
+      "<strong>" + (answer.correct ? "Supervisor feedback: strong." : "Supervisor feedback: adjust this.") + "</strong>",
       "<div class=\"explanation-grid\">",
-      "<div><span>Correct answer</span><p>" + escapeHtml(answer.correctChoice) + "</p></div>",
-      "<div><span>Why it fits</span><p>" + escapeHtml(answer.whyBest || "It matches the model, risk, and next-step clue.") + "</p></div>",
-      "<div><span>Exam clue</span><p>" + escapeHtml(answer.clue || "Look for the model, risk, consent, and next-step signal.") + "</p></div>",
-      "<div><span>Review next</span><p>" + escapeHtml(answer.reviewNext || reviewNextText(answer)) + "</p></div>",
+      "<div><span>Your move</span><p>" + escapeHtml(answer.selectedChoice) + "</p></div>",
+      "<div><span>Best move</span><p>" + escapeHtml(answer.correctChoice) + "</p></div>",
+      "<div><span>Client follows up</span><p>" + escapeHtml(answer.clientFollowup) + "</p></div>",
+      "<div><span>Supervisor note</span><p>" + escapeHtml(answer.supervisorNote) + "</p></div>",
       "</div>",
-      answer.correct ? "" : "<p><strong>Why the tempting answer misses:</strong> " + escapeHtml(answer.whyTempting) + "</p>",
-      "<p><strong>Clinical caution:</strong> " + escapeHtml(answer.clinicalCaution || "Educational exam prep only; use current law, ethics codes, supervision, and official materials in actual practice.") + "</p>",
+      "<p><strong>Why:</strong> " + escapeHtml(answer.whyBest) + "</p>",
+      "</div>"
+    ].join("");
+  }
+
+  function renderClinicCoach() {
+    if (!els.clinicCoach) return;
+    var clinic = state.clinic;
+    if (!clinic) {
+      var attempts = (getProfile().clinicAttempts || []).length;
+      els.clinicCoach.innerHTML = [
+        "<div class=\"skill-score-stack\">",
+        "<div><strong>" + attempts + "</strong><span>Completed sessions</span></div>",
+        "<div><strong>Choices + rewrite</strong><span>Response format</span></div>",
+        "<div><strong>Local v1</strong><span>No backend required</span></div>",
+        "</div>"
+      ].join("");
+      return;
+    }
+    var possible = clinic.answers.length * 2;
+    var earned = clinic.answers.reduce(function (sum, answer) { return sum + (answer.score || 0); }, 0);
+    els.clinicCoach.innerHTML = [
+      "<div class=\"skill-score-stack\">",
+      "<div><strong>" + earned + " / " + possible + "</strong><span>Clinical points</span></div>",
+      "<div><strong>" + clinic.answers.length + "</strong><span>Turns answered</span></div>",
+      "<div><strong>" + clinic.alliance + "</strong><span>Alliance trend</span></div>",
       "</div>"
     ].join("");
   }
@@ -940,29 +949,32 @@
       clinic.completed = true;
       saveClinicAttempt(clinic);
     }
-    var correct = clinic.answers.filter(function (answer) { return answer.correct; }).length;
-    var total = clinic.items.length || 1;
-    var percent = Math.round((correct / total) * 100);
-    var strengthened = unique(clinic.answers.filter(function (answer) { return answer.correct; }).map(function (answer) {
-      return answer.model + " " + answer.topic;
-    })).slice(0, 3);
-    var missed = unique(clinic.answers.filter(function (answer) { return !answer.correct; }).map(function (answer) {
+    var possible = clinic.answers.length * 2 || 1;
+    var earned = clinic.answers.reduce(function (sum, answer) { return sum + (answer.score || 0); }, 0);
+    var percent = Math.round((earned / possible) * 100);
+    var strengths = unique(clinic.answers.filter(function (answer) { return answer.score === 2; }).map(function (answer) {
+      return answer.topic;
+    })).slice(0, 4);
+    var missed = unique(clinic.answers.filter(function (answer) { return answer.score < 2; }).map(function (answer) {
       return answer.model + " -> " + answer.topic;
-    })).slice(0, 3);
+    })).slice(0, 4);
     els.todayStudyPath.innerHTML = [
       "<div class=\"clinic-summary\">",
       "<div class=\"clinic-session-head\"><strong>Supervisor Summary</strong><span>" + percent + "%</span></div>",
-      "<p>Today you strengthened <strong>" + escapeHtml(strengthened.length ? strengthened.join(" + ") : "your starter clinic routine") + "</strong>.</p>",
-      missed.length ? "<div class=\"feedback needs-work\"><strong>Next weak spot:</strong>" + list(missed) + "</div>" : "<div class=\"feedback good\"><strong>Clean clinic.</strong> No weak spots from this round.</div>",
-      clinic.level === "exam" ? "<div class=\"review-list\">" + clinic.answers.map(renderClinicFeedback).join("") + "</div>" : "",
-      "<div class=\"button-row\"><button type=\"button\" id=\"clinicAgain\">Start Another Clinic</button><button class=\"secondary\" type=\"button\" id=\"clinicClose\">Back to Dashboard</button></div>",
+      "<p><strong>" + escapeHtml(clinic.script.title) + "</strong> completed as a branching role-play session.</p>",
+      strengths.length ? "<div class=\"feedback good\"><strong>Strengths:</strong>" + list(strengths) + "</div>" : "",
+      missed.length ? "<div class=\"feedback needs-work\"><strong>Practice next:</strong>" + list(missed) + "</div>" : "<div class=\"feedback good\"><strong>Clean session.</strong> Try a harder focus next.</div>",
+      "<div class=\"review-list\">" + clinic.answers.map(renderClinicFeedback).join("") + "</div>",
+      "<div class=\"button-row\"><button type=\"button\" id=\"clinicAgain\">Start Another Session</button><button class=\"secondary\" type=\"button\" id=\"clinicClose\">Back to Dashboard</button></div>",
       "</div>"
     ].join("");
+    renderClinicCoach();
     bindOptionalClick("clinicAgain", function () {
       startDailyClinic(clinic.level, clinic.targetWeak);
     });
     bindOptionalClick("clinicClose", function () {
       state.clinic = null;
+      showView("dashboard");
       renderDashboard();
     });
   }
@@ -970,17 +982,20 @@
   function saveClinicAttempt(clinic) {
     if (clinic.saved) return;
     var profile = getProfile();
-    var correct = clinic.answers.filter(function (answer) { return answer.correct; }).length;
-    var total = clinic.items.length || 1;
-    var missed = clinic.answers.filter(function (answer) { return !answer.correct; });
+    var possible = clinic.answers.length * 2 || 1;
+    var earned = clinic.answers.reduce(function (sum, answer) { return sum + (answer.score || 0); }, 0);
+    var missed = clinic.answers.filter(function (answer) { return answer.score < 2; });
     profile.clinicAttempts = Array.isArray(profile.clinicAttempts) ? profile.clinicAttempts : [];
     profile.clinicAttempts.unshift({
       date: new Date().toISOString(),
       level: clinic.level,
-      scorePercent: Math.round((correct / total) * 100),
-      correct: correct,
-      total: total,
-      strengthened: unique(clinic.answers.filter(function (answer) { return answer.correct; }).map(function (answer) { return answer.model + " " + answer.topic; })),
+      title: clinic.script.title,
+      mode: "Branching Session",
+      model: clinic.script.model,
+      scorePercent: Math.round((earned / possible) * 100),
+      correct: clinic.answers.filter(function (answer) { return answer.score === 2; }).length,
+      total: clinic.answers.length,
+      strengthened: unique(clinic.answers.filter(function (answer) { return answer.score === 2; }).map(function (answer) { return answer.model + " " + answer.topic; })),
       missedAreas: unique(missed.map(function (answer) { return answer.model + " -> " + answer.topic; })),
       answers: clinic.answers
     });
@@ -988,6 +1003,7 @@
     clinic.saved = true;
     saveProfiles();
     renderProgress();
+    renderDashboard();
   }
 
   function studyStep(number, title, detail, actionId, disabled) {
@@ -1645,7 +1661,7 @@
       return;
     }
     renderQuizAvailability();
-    els.quizCard.innerHTML = "<div class=\"empty-state\">Choose settings and start a questionnaire.</div>";
+    els.quizCard.innerHTML = "<div class=\"empty-state\">Choose settings and start an exam-recall set.</div>";
   }
 
   function getQuizMode() {
@@ -1681,10 +1697,10 @@
     var message = "";
     if (mode === "review") {
       message = pool.length
-        ? Math.min(requested, pool.length) + " due spaced-review question" + (Math.min(requested, pool.length) === 1 ? "" : "s") + " will be used."
-        : "No spaced-review questions are due. Start a mixed set to create review items.";
+        ? Math.min(requested, pool.length) + " due exam-recall question" + (Math.min(requested, pool.length) === 1 ? "" : "s") + " will be used."
+        : "No exam-recall questions are due. Start a mixed set to create review items.";
     } else if (mode === "timed") {
-      message = "Timed mixed mode interleaves topics and saves feedback until the end.";
+      message = "Timed mixed mode interleaves topics and saves explanations until the end.";
     } else {
       message = els.quizCount.value === "all"
         ? pool.length + " matching questions will be used."
@@ -2641,91 +2657,110 @@
     ].join("");
   }
 
-  function populateSkillCases() {
-    if (!els.skillCase || !els.skillMode || !els.skillDifficulty) return;
-    var mode = els.skillMode.value;
-    if (mode === "weak") {
-      els.skillCase.innerHTML = "<option value=\"weak-auto\">Auto weak spots</option>";
-      els.skillCase.disabled = true;
-      return;
-    }
-    els.skillCase.disabled = false;
-    var selected = els.skillCase.value || "random";
-    var pool = getSkillPool();
-    els.skillCase.innerHTML = "<option value=\"random\">Random drill</option>" + pool.map(function (drill) {
-      return "<option value=\"" + escapeHtml(drill.id) + "\">" + escapeHtml(drill.title) + "</option>";
-    }).join("");
-    els.skillCase.value = pool.some(function (drill) { return drill.id === selected; }) ? selected : "random";
+  function getSkillTab() {
+    return els.skillMode && els.skillMode.value === "simulator" ? "simulator" : "quick";
   }
 
-  function getSkillPool() {
-    var mode = els.skillMode.value;
-    var difficulty = els.skillDifficulty.value;
+  function setSkillTab(tab) {
+    var nextTab = tab === "simulator" ? "simulator" : "quick";
+    var profile = getProfile();
+    setSelectIfOption(els.skillMode, nextTab);
+    if (profile && profile.settings) {
+      profile.settings.skillMode = nextTab;
+      saveProfiles();
+    }
+    state.skill = null;
+    populateSkillCases();
+    renderSkillPlaceholder();
+  }
+
+  function renderSkillTabs() {
+    var tab = getSkillTab();
+    document.querySelectorAll("[data-skill-tab]").forEach(function (button) {
+      button.classList.toggle("is-active", button.getAttribute("data-skill-tab") === tab);
+    });
+  }
+
+  function populateSkillCases() {
+    if (!els.skillCase) return;
+    els.skillCase.disabled = true;
+    els.skillCase.innerHTML = "<option value=\"random\">Random round</option>";
+  }
+
+  function getSkillPool(types) {
+    var difficulty = els.skillDifficulty ? els.skillDifficulty.value : "mixed";
+    var allowed = types || [];
     return (DATA.skillDrills || []).filter(function (drill) {
-      var modeMatch = drill.type === mode;
+      var typeMatch = !allowed.length || allowed.indexOf(drill.type) !== -1;
       var difficultyMatch = difficulty === "mixed" || drill.difficulty === difficulty;
-      return modeMatch && difficultyMatch;
+      return typeMatch && difficultyMatch;
     });
   }
 
   function renderSkillPlaceholder() {
     var profile = getProfile();
     if (profile && profile.settings) {
-      setSelectIfOption(els.skillMode, profile.settings.skillMode || "modelCompare");
+      var savedMode = ["quick", "simulator"].indexOf(profile.settings.skillMode) !== -1 ? profile.settings.skillMode : "quick";
+      setSelectIfOption(els.skillMode, savedMode);
       setSelectIfOption(els.skillDifficulty, profile.settings.skillDifficulty || "mixed");
     }
     populateSkillCases();
+    renderSkillTabs();
     if (state.skill) {
       renderSkill();
       return;
     }
     renderSkillAvailability();
-    els.skillCard.innerHTML = "<div class=\"empty-state\">Choose settings and load a skill drill.</div>";
-    els.skillScore.innerHTML = "<div class=\"empty-state\">No skill scored yet.</div>";
+    var isSimulator = getSkillTab() === "simulator";
+    els.skillCard.innerHTML = [
+      "<div class=\"skill-welcome\">",
+      "<h3>" + (isSimulator ? "Simulator" : "Quick Play") + "</h3>",
+      "<p>" + (isSimulator ? "Pick the strongest therapist move, get a short why-it-works note, then try a stronger line if you want." : "One-click rounds for model clues, next moves, red flags, and terms. Build a streak and keep moving.") + "</p>",
+      "<div class=\"skill-mode-grid\">",
+      "<div><strong>Model Clue Match</strong><span>Spot the model from exam-style clues.</span></div>",
+      "<div><strong>Next Move</strong><span>Choose the next clinical step.</span></div>",
+      "<div><strong>Red Flag Sprint</strong><span>Decide when safety or ethics comes first.</span></div>",
+      "<div><strong>Term Snap</strong><span>Match key language before it fades.</span></div>",
+      "</div>",
+      "<div class=\"button-row\"><button type=\"button\" id=\"startSkillRound\">" + (isSimulator ? "Start Simulator" : "Start Quick Play") + "</button></div>",
+      "</div>"
+    ].join("");
+    bindSkillCardEvents();
   }
 
   function renderSkillAvailability() {
     if (!els.skillScore) return;
-    if (els.skillMode.value === "weak") {
-      els.skillScore.innerHTML = "<div class=\"empty-state\">Weak area practice uses your missed topics.</div>";
-      return;
-    }
-    var pool = getSkillPool();
-    els.skillScore.innerHTML = "<div class=\"empty-state\">" + pool.length + " matching skill drill" + (pool.length === 1 ? "" : "s") + ".</div>";
+    var profile = getProfile();
+    var best = profile && profile.settings ? profile.settings.skillBestStreak || 0 : 0;
+    var tab = getSkillTab();
+    els.skillScore.innerHTML = [
+      "<div class=\"skill-score-stack\">",
+      "<div><strong>" + (tab === "simulator" ? "Simulator" : "Quick Play") + "</strong><span>Ready</span></div>",
+      "<div><strong>" + best + "</strong><span>Best streak</span></div>",
+      "<div><strong>0 / 0</strong><span>This run</span></div>",
+      "</div>"
+    ].join("");
   }
 
-  function startSkillDrill() {
+  function startSkillDrill(options) {
     var profile = getProfile();
-    profile.settings.skillMode = els.skillMode.value;
+    var tab = getSkillTab();
+    var oldStats = state.skill && state.skill.mode === tab && state.skill.stats ? state.skill.stats : null;
+    var stats = oldStats || { correct: 0, total: 0, streak: 0, bestStreak: profile.settings.skillBestStreak || 0 };
+    profile.settings.skillMode = tab;
     profile.settings.skillDifficulty = els.skillDifficulty.value;
     saveProfiles();
 
-    if (els.skillMode.value === "weak") {
-      state.skill = { mode: "weak", item: null, scored: false, result: null };
-      renderSkill();
-      return;
-    }
-
-    var pool = getSkillPool();
-    var selectedId = els.skillCase.value;
-    var item = selectedId && selectedId !== "random"
-      ? pool.find(function (drill) { return drill.id === selectedId; })
-      : null;
-    if (!item) {
-      item = shuffle(pool)[0];
-    }
-    if (item) {
-      els.skillCase.value = item.id;
-    }
-
+    var targetModel = options && options.weak ? getWeakQuizModel(profile) : null;
+    var item = tab === "simulator" ? buildSimulatorRound(targetModel) : buildQuickPlayRound(targetModel);
     state.skill = {
-      mode: item ? item.type : els.skillMode.value,
+      mode: tab,
       item: item,
-      selections: {},
-      responses: {},
-      scored: false,
-      result: null,
-      feedbackGuide: null,
+      selectedIndex: null,
+      submitted: false,
+      correct: false,
+      rewrite: "",
+      stats: stats,
       startedAt: new Date().toISOString()
     };
     renderSkill();
@@ -2733,39 +2768,257 @@
 
   function renderSkill() {
     var session = state.skill;
+    renderSkillTabs();
     if (!session) {
       renderSkillPlaceholder();
       return;
     }
-    if (session.mode === "weak") {
-      renderWeakPractice();
-      return;
-    }
     if (!session.item) {
-      els.skillCard.innerHTML = "<div class=\"empty-state\">No skill drills match those settings.</div>";
-      els.skillScore.innerHTML = "<div class=\"empty-state\">No skill scored yet.</div>";
+      els.skillCard.innerHTML = "<div class=\"empty-state\">No skill rounds match those settings.</div>";
+      els.skillScore.innerHTML = "<div class=\"empty-state\">Try mixed difficulty or another Skill Lab tab.</div>";
       return;
     }
-
-    var item = session.item;
-    var body = "";
-    if (item.type === "modelCompare") body = renderModelCompareSkill(item, session);
-    if (item.type === "responsePractice") body = renderChoiceSkill(item, session, "Written response");
-    if (item.type === "bowenTrainer" || item.type === "eftMapper") body = renderGuidedSkill(item, session);
-    if (item.type === "nextIntervention") body = renderChoiceSkill(item, session, "Why this next step?");
-    if (item.type === "ethicsScanner") body = renderEthicsSkill(item, session);
-
-    els.skillCard.innerHTML = [
-      renderSkillHeader(item),
-      session.feedbackGuide && !session.scored ? renderSkillRedoGuide(session.feedbackGuide) : "",
-      body,
-      session.scored ? skillFeedback(session.result, item) : "",
-      "<div class=\"button-row\">",
-      session.scored ? "<button type=\"button\" id=\"redoSkill\">Redo With Feedback</button><button type=\"button\" id=\"newSkillDrill\">New Drill</button>" : "<button type=\"button\" id=\"scoreSkill\">Score Drill</button><button class=\"secondary\" type=\"button\" id=\"resetSkill\">Reset</button>",
-      "</div>"
-    ].join("");
+    els.skillCard.innerHTML = session.mode === "simulator" ? renderSimulatorRound(session) : renderQuickPlayRound(session);
     bindSkillCardEvents();
     renderSkillScore();
+  }
+
+  function buildQuickPlayRound(targetModel) {
+    var builders = [
+      buildModelClueRound,
+      buildNextMoveRound,
+      buildRedFlagRound,
+      buildTermSnapRound
+    ];
+    var round = null;
+    shuffle(builders).some(function (builder) {
+      round = builder(targetModel);
+      return !!round;
+    });
+    return round;
+  }
+
+  function buildModelClueRound(targetModel) {
+    var difficulty = els.skillDifficulty ? els.skillDifficulty.value : "mixed";
+    var pool = (DATA.questions || []).filter(function (question) {
+      var difficultyMatch = difficulty === "mixed" || question.difficulty === difficulty;
+      var modelMatch = !targetModel || question.model === targetModel;
+      return difficultyMatch && modelMatch && question.prompt;
+    });
+    var item = shuffle(pool)[0];
+    if (!item) return null;
+    var choices = ["Bowen", "EFT", "Ethics", "Systemic Roles"];
+    var correctIndex = Math.max(0, choices.indexOf(item.model));
+    return {
+      id: "quick-model-" + item.id,
+      gameType: "Model Clue Match",
+      title: "Model Clue Match",
+      prompt: item.prompt,
+      choices: choices,
+      correctIndex: correctIndex,
+      feedback: item.explanation || item.hint || "Match the model language in the stem.",
+      modelAnswer: choices[correctIndex],
+      model: item.model,
+      difficulty: item.difficulty,
+      sourceTitle: item.topic || item.model
+    };
+  }
+
+  function buildNextMoveRound(targetModel) {
+    var pool = getSkillPool(["nextIntervention", "responsePractice"]).filter(function (drill) {
+      return Array.isArray(drill.choices) && (!targetModel || skillMatchesTarget(drill, targetModel));
+    });
+    var item = shuffle(pool)[0];
+    if (!item) return null;
+    var maxScore = getMaxChoiceScore(item.choices);
+    var correctIndex = item.choices.findIndex(function (choice) { return choice.score === maxScore; });
+    return {
+      id: "quick-next-" + item.id,
+      gameType: "Next Move",
+      title: item.title,
+      prompt: item.prompt,
+      choices: item.choices.map(function (choice) { return choice.text; }),
+      correctIndex: correctIndex < 0 ? 0 : correctIndex,
+      feedbackByChoice: item.choices.map(function (choice) { return choice.feedback; }),
+      feedback: item.modelAnswer || item.choices[correctIndex < 0 ? 0 : correctIndex].feedback,
+      modelAnswer: item.choices[correctIndex < 0 ? 0 : correctIndex].text,
+      model: modelForSkill(item),
+      difficulty: item.difficulty,
+      sourceTitle: item.title
+    };
+  }
+
+  function buildRedFlagRound(targetModel) {
+    var mixed = getSkillPool(["nextIntervention", "ethicsScanner", "responsePractice"]).filter(function (drill) {
+      return !targetModel || skillMatchesTarget(drill, targetModel);
+    });
+    var item = shuffle(mixed)[0];
+    if (!item) return null;
+    var text = [item.title, item.prompt, item.modelAnswer, (item.tags || []).join(" ")].join(" ").toLowerCase();
+    var isRedFlag = /safety|risk|coercion|violence|abuse|danger|mandated|consent|confidential|legal|ethic|court|document|protect/.test(text);
+    return {
+      id: "quick-red-" + item.id,
+      gameType: "Red Flag Sprint",
+      title: item.title,
+      prompt: item.prompt,
+      choices: ["Safety / ethics comes first", "Proceed with model technique"],
+      correctIndex: isRedFlag ? 0 : 1,
+      feedback: isRedFlag ? "Pause model technique and clarify safety, consent, risk, or documentation first." : "No clear safety override is stated, so model-consistent clinical work can proceed while still monitoring risk.",
+      modelAnswer: isRedFlag ? "Safety / ethics comes first" : "Proceed with model technique",
+      model: isRedFlag ? "Ethics" : modelForSkill(item),
+      difficulty: item.difficulty,
+      sourceTitle: item.title
+    };
+  }
+
+  function buildTermSnapRound(targetModel) {
+    var terms = [];
+    (DATA.studySections || []).forEach(function (section) {
+      (section.keyTerms || []).forEach(function (term) {
+        var model = section.model || section.title || "Systemic Roles";
+        if (!targetModel || model.indexOf(targetModel) !== -1 || section.title.indexOf(targetModel) !== -1) {
+          terms.push({ term: term.term, definition: term.definition, model: model, section: section.title });
+        }
+      });
+    });
+    var item = shuffle(terms)[0];
+    if (!item) return null;
+    var distractors = shuffle(terms.filter(function (term) { return term.term !== item.term; })).slice(0, 3).map(function (term) {
+      return term.term;
+    });
+    var choices = shuffle([item.term].concat(distractors));
+    return {
+      id: "quick-term-" + slugify(item.term),
+      gameType: "Term Snap",
+      title: item.section,
+      prompt: item.definition,
+      choices: choices,
+      correctIndex: choices.indexOf(item.term),
+      feedback: item.term + " belongs with " + item.model + ".",
+      modelAnswer: item.term,
+      model: normalizeSkillModel(item.model),
+      difficulty: els.skillDifficulty ? els.skillDifficulty.value : "mixed",
+      sourceTitle: item.section
+    };
+  }
+
+  function slugify(text) {
+    return String(text || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
+  function normalizeSkillModel(model) {
+    var text = String(model || "").toLowerCase();
+    if (text.indexOf("bowen") !== -1) return "Bowen";
+    if (text.indexOf("eft") !== -1 || text.indexOf("emotion") !== -1) return "EFT";
+    if (text.indexOf("ethic") !== -1 || text.indexOf("risk") !== -1 || text.indexOf("safety") !== -1) return "Ethics";
+    return "Systemic Roles";
+  }
+
+  function buildSimulatorRound(targetModel) {
+    var pool = getSkillPool(["responsePractice", "nextIntervention", "bowenTrainer", "eftMapper"]).filter(function (drill) {
+      return !targetModel || skillMatchesTarget(drill, targetModel);
+    });
+    var item = shuffle(pool)[0];
+    if (!item) return null;
+    if (Array.isArray(item.choices)) {
+      var maxScore = getMaxChoiceScore(item.choices);
+      var correctIndex = item.choices.findIndex(function (choice) { return choice.score === maxScore; });
+      return {
+        id: "sim-" + item.id,
+        gameType: "Simulator",
+        title: item.title,
+        prompt: item.prompt,
+        choices: item.choices.map(function (choice) { return choice.text; }),
+        correctIndex: correctIndex < 0 ? 0 : correctIndex,
+        feedbackByChoice: item.choices.map(function (choice) { return choice.feedback; }),
+        feedback: item.modelAnswer || item.choices[correctIndex < 0 ? 0 : correctIndex].feedback,
+        modelAnswer: item.modelAnswer || item.choices[correctIndex < 0 ? 0 : correctIndex].text,
+        model: modelForSkill(item),
+        difficulty: item.difficulty,
+        sourceTitle: item.title
+      };
+    }
+    var categories = Object.keys(item.choices || {});
+    var category = shuffle(categories)[0];
+    if (!category) return null;
+    var choices = item.choices[category] || [];
+    var ideal = item.idealSelections && item.idealSelections[category] !== undefined ? item.idealSelections[category] : 0;
+    return {
+      id: "sim-" + item.id + "-" + category,
+      gameType: "Simulator",
+      title: item.title + ": " + labelForCategory(category),
+      prompt: item.prompt,
+      choices: choices,
+      correctIndex: ideal,
+      feedback: item.rubric && item.rubric[category] ? item.rubric[category] : item.modelAnswer,
+      modelAnswer: item.modelAnswer,
+      model: modelForSkill(item),
+      difficulty: item.difficulty,
+      sourceTitle: item.title
+    };
+  }
+
+  function renderQuickPlayRound(session) {
+    var item = session.item;
+    return [
+      renderRoundHeader(item, session),
+      "<div class=\"skill-prompt\"><strong>" + escapeHtml(item.gameType) + "</strong><p>" + escapeHtml(item.prompt) + "</p></div>",
+      renderSkillAnswerButtons(session),
+      session.submitted ? renderRoundFeedback(session) : "",
+      renderRoundButtons(session)
+    ].join("");
+  }
+
+  function renderSimulatorRound(session) {
+    var item = session.item;
+    return [
+      renderRoundHeader(item, session),
+      "<div class=\"skill-prompt\"><strong>Client moment</strong><p>" + escapeHtml(item.prompt) + "</p></div>",
+      renderSkillAnswerButtons(session),
+      session.submitted ? renderRoundFeedback(session) : "",
+      session.submitted ? "<label class=\"sim-rewrite-label\" for=\"simRewrite\">Try a stronger line</label><textarea id=\"simRewrite\" class=\"sim-rewrite\" data-sim-rewrite placeholder=\"Optional: write one cleaner therapist line after seeing the feedback.\">" + escapeHtml(session.rewrite || "") + "</textarea>" : "",
+      renderRoundButtons(session)
+    ].join("");
+  }
+
+  function renderRoundHeader(item, session) {
+    return [
+      "<div class=\"skill-round-head\">",
+      "<div><div class=\"skill-meta\"><span class=\"tag\">" + escapeHtml(item.gameType) + "</span><span class=\"tag\">" + escapeHtml(item.difficulty || "mixed") + "</span><span class=\"tag\">" + escapeHtml(item.model || "Mixed") + "</span></div>",
+      "<h3>" + escapeHtml(item.title) + "</h3></div>",
+      "<div class=\"round-streak\"><strong>" + session.stats.streak + "</strong><span>streak</span></div>",
+      "</div>"
+    ].join("");
+  }
+
+  function renderSkillAnswerButtons(session) {
+    return "<div class=\"skill-answer-grid\">" + session.item.choices.map(function (choice, index) {
+      var classes = ["skill-answer"];
+      if (session.submitted && index === session.item.correctIndex) classes.push("is-correct");
+      if (session.submitted && index === session.selectedIndex && index !== session.item.correctIndex) classes.push("is-wrong");
+      return "<button class=\"" + classes.join(" ") + "\" type=\"button\" data-skill-answer=\"" + index + "\"" + (session.submitted ? " disabled" : "") + ">" + escapeHtml(choice) + "</button>";
+    }).join("") + "</div>";
+  }
+
+  function renderRoundFeedback(session) {
+    var item = session.item;
+    var selectedFeedback = item.feedbackByChoice && item.feedbackByChoice[session.selectedIndex] ? item.feedbackByChoice[session.selectedIndex] : item.feedback;
+    return [
+      "<div class=\"feedback " + (session.correct ? "good" : "needs-work") + "\">",
+      "<strong>" + (session.correct ? "Correct." : "Not quite.") + "</strong>",
+      "<p>" + escapeHtml(selectedFeedback || item.feedback || "") + "</p>",
+      "<p><strong>Best answer:</strong> " + escapeHtml(item.modelAnswer || item.choices[item.correctIndex]) + "</p>",
+      "</div>"
+    ].join("");
+  }
+
+  function renderRoundButtons(session) {
+    return [
+      "<div class=\"button-row\">",
+      session.submitted ? "<button type=\"button\" id=\"newSkillDrill\">Next Round</button>" : "",
+      "<button class=\"secondary\" type=\"button\" id=\"startSkillRound\">" + (session.submitted ? "Restart Run" : "New Round") + "</button>",
+      "</div>"
+    ].join("");
   }
 
   function renderSkillHeader(item) {
@@ -2779,14 +3032,182 @@
 
   function skillTaskText(type) {
     var labels = {
-      modelCompare: "Name how Bowen, EFT, and systemic LMFT thinking would each organize the same case.",
-      responsePractice: "Choose a therapist response, then write your own version.",
-      bowenTrainer: "Identify Bowen concepts and the therapist's coaching stance.",
-      eftMapper: "Map the negative cycle, primary emotion, attachment fear, and next EFT move.",
-      nextIntervention: "Choose the strongest next clinical action and explain why.",
-      ethicsScanner: "Mark the risk/ethics flags and state what must be assessed next."
+      modelCompare: "Write a short clinical conceptualization, compare the model lens, and name the next intervention.",
+      responsePractice: "Write the therapist response you would actually say and explain the clinical reason for it.",
+      bowenTrainer: "Map the family process, Bowen concepts, and coaching stance in writing.",
+      eftMapper: "Map the cycle, primary emotion, attachment meaning, and next EFT move in writing.",
+      nextIntervention: "Write the strongest next clinical action and why it fits the case.",
+      ethicsScanner: "Write the risk/ethics flags, what must be assessed, and the documentation or consultation step."
     };
     return labels[type] || "Complete the clinical reasoning drill.";
+  }
+
+  function renderSkillWorksheet(item, session) {
+    var fields = getSkillWorksheetFields(item);
+    return [
+      "<div class=\"worksheet-intro\"><strong>Clinical worksheet</strong><p>Use complete clinical sentences. This section scores your written reasoning against the case checklist, not answer-picking.</p></div>",
+      "<div class=\"skill-worksheet\">",
+      fields.map(function (field) {
+        return [
+          "<div class=\"worksheet-field\">",
+          "<label for=\"skillText-" + escapeHtml(field.id) + "\">" + escapeHtml(field.label) + "</label>",
+          "<p>" + escapeHtml(field.help) + "</p>",
+          "<textarea id=\"skillText-" + escapeHtml(field.id) + "\" data-skill-text=\"" + escapeHtml(field.id) + "\" placeholder=\"" + escapeHtml(field.placeholder) + "\" " + (session.scored ? "disabled" : "") + ">" + escapeHtml(session.responses[field.id] || "") + "</textarea>",
+          "</div>"
+        ].join("");
+      }).join(""),
+      "</div>"
+    ].join("");
+  }
+
+  function getSkillWorksheetFields(item) {
+    var ethicsRelevant = isEthicsRelevantSkill(item);
+    return [
+      {
+        id: "conceptualization",
+        label: "Case conceptualization",
+        help: "Name the relational pattern, symptom function, cycle, triangle, or risk frame that organizes the case.",
+        placeholder: "The clinical pattern I see is..."
+      },
+      {
+        id: "modelFit",
+        label: "Model fit / clinical lens",
+        help: "Explain which model language fits and what clues in the stem support that lens.",
+        placeholder: "The best lens is... because the stem shows..."
+      },
+      {
+        id: "nextIntervention",
+        label: "Next best intervention",
+        help: "State the next therapist move and why it should happen before other tempting options.",
+        placeholder: "The next step is..."
+      },
+      {
+        id: "therapistLanguage",
+        label: "Therapist wording",
+        help: "Write a sentence or two you could say in session using calm, model-consistent language.",
+        placeholder: "I might say..."
+      },
+      {
+        id: "ethicsNotes",
+        label: ethicsRelevant ? "Risk / ethics / documentation" : "Risk / ethics notes, if relevant",
+        help: ethicsRelevant ? "Name the safety, consent, confidentiality, documentation, consultation, or legal duty issue." : "If there is no risk issue, say that and note what you would still monitor.",
+        placeholder: ethicsRelevant ? "I would assess or document..." : "No immediate risk is stated; I would monitor..."
+      }
+    ];
+  }
+
+  function isEthicsRelevantSkill(item) {
+    var text = [
+      item.type,
+      item.title,
+      item.prompt,
+      item.modelAnswer,
+      (item.tags || []).join(" "),
+      (item.tips || []).join(" ")
+    ].join(" ").toLowerCase();
+    return /ethic|risk|safety|danger|coercion|abuse|consent|confidential|document|legal|court|mandated|protect/.test(text);
+  }
+
+  function getSkillWorksheetChecklist(item) {
+    var checklist = [];
+    function add(label, keywords) {
+      var cleanKeywords = unique((keywords || []).map(function (keyword) {
+        return String(keyword || "").trim();
+      }).filter(Boolean));
+      if (!label || !cleanKeywords.length) return;
+      checklist.push({ label: label, keywords: cleanKeywords });
+    }
+
+    (item.fields || []).forEach(function (field) {
+      (field.checklist || []).forEach(function (check) {
+        add(field.label + ": " + check.label, check.keywords);
+      });
+    });
+
+    (item.checklist || []).forEach(function (check) {
+      add(check.label, check.keywords);
+    });
+
+    if (item.rubric) {
+      Object.keys(item.rubric).forEach(function (key) {
+        var label = labelForCategory(key);
+        var ideal = item.choices && item.choices[key] && item.choices[key][item.idealSelections ? item.idealSelections[key] : 0];
+        add(label, skillKeywordsFromText([label, item.rubric[key], ideal].join(" ")));
+      });
+    }
+
+    if (item.flags && item.idealFlags) {
+      item.idealFlags.forEach(function (index) {
+        add("Risk flag: " + item.flags[index], skillKeywordsFromText(item.flags[index]));
+      });
+    }
+
+    if (!checklist.length) {
+      add("Clinical pattern", ["pattern", "cycle", "relationship", "system"]);
+      add("Next step", ["next", "assess", "intervention", "therapist"]);
+      add("Model language", skillKeywordsFromText((item.tags || []).join(" ")).concat(skillKeywordsFromText(item.title)));
+    }
+
+    return dedupeChecklist(checklist);
+  }
+
+  function skillKeywordsFromText(text) {
+    var stopWords = {
+      "the": true, "and": true, "for": true, "with": true, "that": true, "this": true,
+      "from": true, "into": true, "about": true, "would": true, "should": true,
+      "their": true, "therapist": true, "client": true, "family": true, "couple": true
+    };
+    return unique(String(text || "").toLowerCase().split(/[^a-z0-9-]+/).filter(function (word) {
+      return word.length > 3 && !stopWords[word];
+    })).slice(0, 8);
+  }
+
+  function dedupeChecklist(checklist) {
+    var seen = {};
+    return checklist.filter(function (item) {
+      var key = item.label.toLowerCase();
+      if (seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+  }
+
+  function scoreWorksheetSkill(session, item) {
+    var fields = getSkillWorksheetFields(item);
+    var responses = fields.map(function (field) {
+      return {
+        id: field.id,
+        label: field.label,
+        text: session.responses[field.id] || ""
+      };
+    });
+    var combinedText = responses.map(function (response) { return response.text; }).join(" ");
+    var checklist = getSkillWorksheetChecklist(item);
+    var written = scoreChecklist(combinedText, checklist);
+    var requiredFields = responses.filter(function (response) {
+      return response.id !== "ethicsNotes" || isEthicsRelevantSkill(item) || response.text.trim().length > 0;
+    });
+    var missingFields = requiredFields.filter(function (response) {
+      return response.text.trim().length < 20;
+    }).map(function (response) { return response.label; });
+    var completeness = requiredFields.length
+      ? Math.round(((requiredFields.length - missingFields.length) / requiredFields.length) * 100)
+      : 100;
+    var score = Math.round(((written.percent * 2) + completeness) / 3);
+    return {
+      scorePercent: score,
+      worksheet: {
+        responses: responses,
+        written: written,
+        completeness: completeness,
+        missingFields: missingFields
+      },
+      missedAreas: unique(written.hits.filter(function (hit) {
+        return !hit.matched;
+      }).map(function (hit) {
+        return hit.label;
+      }).concat(missingFields))
+    };
   }
 
   function renderModelCompareSkill(item, session) {
@@ -2856,69 +3277,52 @@
 
   function bindSkillCardEvents() {
     var session = state.skill;
-    if (!session || session.scored) {
-      var redo = document.getElementById("redoSkill");
-      if (redo) redo.addEventListener("click", redoSkillWithFeedback);
-      var next = document.getElementById("newSkillDrill");
-      if (next) next.addEventListener("click", startSkillDrill);
+    var start = document.getElementById("startSkillRound");
+    if (start) start.addEventListener("click", function () {
+      state.skill = null;
+      startSkillDrill();
+    });
+    var next = document.getElementById("newSkillDrill");
+    if (next) next.addEventListener("click", startSkillDrill);
+    if (!session || session.submitted) {
+      var rewrite = document.getElementById("simRewrite");
+      if (rewrite && session) {
+        rewrite.addEventListener("input", function () {
+          session.rewrite = rewrite.value;
+        });
+      }
       return;
     }
-
-    els.skillCard.querySelectorAll("[data-skill-text]").forEach(function (input) {
-      input.addEventListener("input", function () {
-        session.responses[input.getAttribute("data-skill-text")] = input.value;
+    els.skillCard.querySelectorAll("[data-skill-answer]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        scoreSkill(Number(button.getAttribute("data-skill-answer")));
       });
     });
-    els.skillCard.querySelectorAll("input[name='skill-choice']").forEach(function (input) {
-      input.addEventListener("change", function () {
-        session.selections.choice = Number(input.value);
-        renderSkill();
-      });
-    });
-    Object.keys(session.item.choices || {}).forEach(function (category) {
-      els.skillCard.querySelectorAll("input[name=\"skill-" + category + "\"]").forEach(function (input) {
-        input.addEventListener("change", function () {
-          session.selections[category] = Number(input.value);
-          renderSkill();
-        });
-      });
-    });
-    els.skillCard.querySelectorAll("[data-skill-flag]").forEach(function (input) {
-      input.addEventListener("change", function () {
-        if (!session.selections.flags) session.selections.flags = {};
-        session.selections.flags[input.getAttribute("data-skill-flag")] = input.checked;
-      });
-    });
-
-    var score = document.getElementById("scoreSkill");
-    if (score) score.addEventListener("click", scoreSkill);
-    var reset = document.getElementById("resetSkill");
-    if (reset) reset.addEventListener("click", startSkillDrill);
   }
 
-  function scoreSkill() {
+  function scoreSkill(selectedIndex) {
     var profile = getProfile();
     var session = state.skill;
     if (!session || !session.item) return;
     var item = session.item;
-    var result = null;
-    if (item.type === "modelCompare") result = scoreModelCompareSkill(session, item);
-    if (item.type === "responsePractice" || item.type === "nextIntervention") result = scoreChoiceSkill(session, item);
-    if (item.type === "bowenTrainer" || item.type === "eftMapper") result = scoreGuidedSkill(session, item);
-    if (item.type === "ethicsScanner") result = scoreEthicsSkill(session, item);
-    if (!result) return;
-
-    session.scored = true;
-    session.result = result;
+    var correct = selectedIndex === item.correctIndex;
+    session.selectedIndex = selectedIndex;
+    session.submitted = true;
+    session.correct = correct;
+    session.stats.total += 1;
+    session.stats.correct += correct ? 1 : 0;
+    session.stats.streak = correct ? session.stats.streak + 1 : 0;
+    session.stats.bestStreak = Math.max(session.stats.bestStreak || 0, session.stats.streak);
+    profile.settings.skillBestStreak = Math.max(profile.settings.skillBestStreak || 0, session.stats.bestStreak);
     profile.skillAttempts.unshift({
       date: new Date().toISOString(),
       drillId: item.id,
       title: item.title,
-      mode: labelForSkillMode(item.type),
-      model: modelForSkill(item),
+      mode: session.mode === "simulator" ? "Simulator" : "Quick Play",
+      model: item.model || "Mixed",
       difficulty: item.difficulty,
-      scorePercent: result.scorePercent,
-      missedAreas: result.missedAreas || []
+      scorePercent: correct ? 100 : 0,
+      missedAreas: correct ? [] : [item.gameType || item.title]
     });
     profile.skillAttempts = profile.skillAttempts.slice(0, 40);
     saveProfiles();
@@ -3024,6 +3428,18 @@
 
   function skillFeedback(result, item) {
     var blocks = [];
+    if (result.worksheet) {
+      blocks.push("<div class=\"feedback " + (result.scorePercent >= 75 ? "good" : "needs-work") + "\"><strong>Worksheet score:</strong> " + result.scorePercent + "%<br><br><strong>Checklist:</strong> " + result.worksheet.written.matched + " of " + result.worksheet.written.total + " clinical reasoning items matched.</div>");
+      if (result.worksheet.missingFields && result.worksheet.missingFields.length) {
+        blocks.push("<div class=\"feedback needs-work\"><strong>Fill out these sections:</strong>" + list(result.worksheet.missingFields) + "</div>");
+      }
+      blocks.push(renderChecklistBreakdown(result.worksheet.written));
+      blocks.push("<div class=\"feedback\"><strong>Model answer:</strong><br>" + escapeHtml(item.modelAnswer || buildWorksheetModelAnswer(item)) + "</div>");
+      if (item.tips && item.tips.length) {
+        blocks.push("<div class=\"feedback\"><strong>Improve next time:</strong>" + list(item.tips) + "</div>");
+      }
+      return blocks.join("");
+    }
     if (result.sections) {
       result.sections.forEach(function (section) {
         blocks.push("<div class=\"feedback " + (section.percent >= 75 ? "good" : "needs-work") + "\"><strong>" + escapeHtml(section.label) + ":</strong> " + section.percent + "%</div>");
@@ -3054,6 +3470,15 @@
     return blocks.join("");
   }
 
+  function buildWorksheetModelAnswer(item) {
+    if (item.fields && item.fields.length) {
+      return item.fields.map(function (field) {
+        return field.label + ": " + field.modelAnswer;
+      }).join("\n\n");
+    }
+    return "Use the case data to name the clinical pattern, match the model language, choose the next step, and write therapist language that fits the risk level and treatment frame.";
+  }
+
   function renderFlagBreakdown(flags) {
     return "<div class=\"check-grid\">" + flags.details.map(function (flag) {
       var label = flag.ideal ? "Needed" : "Not central";
@@ -3064,24 +3489,27 @@
 
   function renderSkillScore() {
     var session = state.skill;
-    if (!session || session.mode === "weak") return;
-    if (!session.scored || !session.result) {
-      els.skillScore.innerHTML = "<div class=\"empty-state\">No skill scored yet.</div>";
+    if (!session || !session.stats) {
+      renderSkillAvailability();
       return;
     }
-    var score = session.result.scorePercent;
-    var missed = (session.result.missedAreas || []).slice(0, 4);
+    var stats = session.stats;
+    var accuracy = stats.total ? Math.round((stats.correct / stats.total) * 100) : 0;
     els.skillScore.innerHTML = [
-      "<div class=\"score-ring\">" + score + "%</div>",
-      "<p><strong>" + scoreLabel(score) + "</strong></p>",
-      missed.length ? "<div class=\"feedback\"><strong>Practice next:</strong>" + list(missed) + "</div>" : "<div class=\"feedback good\"><strong>Next step:</strong> Try another drill or raise the difficulty.</div>"
+      "<div class=\"skill-score-stack\">",
+      "<div><strong>" + stats.streak + "</strong><span>Current streak</span></div>",
+      "<div><strong>" + stats.correct + " / " + stats.total + "</strong><span>This run</span></div>",
+      "<div><strong>" + stats.bestStreak + "</strong><span>Best streak</span></div>",
+      "<div><strong>" + accuracy + "%</strong><span>Accuracy</span></div>",
+      "</div>",
+      session.submitted ? "<div class=\"feedback " + (session.correct ? "good" : "needs-work") + "\"><strong>Last round:</strong> " + (session.correct ? "Nice hit. Keep the streak alive." : "Missed it. Reset and grab the next one.") + "</div>" : ""
     ].join("");
   }
 
   function renderSkillRedoGuide(result) {
     var missed = (result.missedAreas || []).slice(0, 5);
     if (!missed.length) {
-      return "<div class=\"feedback good\"><strong>Redo focus:</strong> Rebuild the answer with more precise model language.</div>";
+      return "<div class=\"feedback good\"><strong>Redo focus:</strong> Rebuild the worksheet with more precise model language.</div>";
     }
     return "<div class=\"feedback needs-work\"><strong>Redo focus:</strong> Strengthen " + escapeHtml(missed.join(", ")) + ".</div>";
   }
@@ -3108,22 +3536,23 @@
     var due = getDueReviewItems(profile).slice(0, 6);
     var model = getWeakQuizModel(profile) || "Bowen";
     els.skillCard.innerHTML = [
-      "<div class=\"skill-meta\"><span class=\"tag\">Weak Area Practice</span><span class=\"tag\">" + escapeHtml(model) + "</span></div>",
-      "<h3>Practice Weak Spots</h3>",
+      "<div class=\"skill-meta\"><span class=\"tag\">Weak-Area Worksheet</span><span class=\"tag\">" + escapeHtml(model) + "</span></div>",
+      "<h3>Practice Weak Spots With Case Writing</h3>",
+      "<div class=\"worksheet-intro\"><strong>Clinical worksheet first</strong><p>Load a written drill targeted to your missed areas. Quiz review is still available, but it is clearly labeled as exam recall.</p></div>",
       due.length ? "<div class=\"weak-list\">" + due.map(function (item) {
         return "<div class=\"weak-item\"><strong>" + escapeHtml(item.title || item.topic) + "</strong><br><span>Due " + escapeHtml(formatDue(item.dueAt)) + " / " + escapeHtml(item.kind) + "</span></div>";
       }).join("") + "</div>" : "",
       missed.length ? "<div class=\"weak-list\">" + missed.map(function (item) {
         return "<div class=\"weak-item\"><strong>" + escapeHtml(item.topic) + "</strong><br><span>" + item.count + " miss" + (item.count === 1 ? "" : "es") + "</span></div>";
       }).join("") + "</div>" : "<div class=\"empty-state\">No misses yet. Bowen is queued first because it is the priority model.</div>",
-      "<div class=\"button-row\"><button type=\"button\" id=\"startWeakQuiz\">Start Weak-Spot Quiz</button><button class=\"secondary\" type=\"button\" id=\"startDueReview\">Due Review</button><button class=\"secondary\" type=\"button\" id=\"startWeakBowen\">Start Bowen Practice</button></div>"
+      "<div class=\"button-row\"><button type=\"button\" id=\"startWeakWorksheet\">Load Weak-Area Worksheet</button><button class=\"secondary\" type=\"button\" id=\"startWeakQuiz\">Start Weak-Area Quiz</button><button class=\"secondary\" type=\"button\" id=\"startDueReview\">Start Due Review Quiz</button></div>"
     ].join("");
-    els.skillScore.innerHTML = "<div class=\"feedback\"><strong>Next quiz target:</strong> " + escapeHtml(model) + "</div>";
+    els.skillScore.innerHTML = "<div class=\"feedback\"><strong>Worksheet target:</strong> " + escapeHtml(model) + "</div>";
+    document.getElementById("startWeakWorksheet").addEventListener("click", function () {
+      startWeakSkillWorksheet(model);
+    });
     document.getElementById("startWeakQuiz").addEventListener("click", function () {
       startWeakQuiz(model);
-    });
-    document.getElementById("startWeakBowen").addEventListener("click", function () {
-      startWeakQuiz("Bowen");
     });
     document.getElementById("startDueReview").addEventListener("click", function () {
       showView("quiz");
@@ -3135,12 +3564,53 @@
     });
   }
 
+  function startWeakSkillWorksheet(model) {
+    var target = model || getWeakQuizModel(getProfile()) || "Bowen";
+    var pool = (DATA.skillDrills || []).filter(function (drill) {
+      return skillMatchesTarget(drill, target);
+    });
+    if (!pool.length) {
+      pool = DATA.skillDrills || [];
+    }
+    var item = shuffle(pool)[0];
+    if (!item) return;
+    setSelectIfOption(els.skillMode, item.type);
+    setSelectIfOption(els.skillDifficulty, "mixed");
+    populateSkillCases();
+    setSelectIfOption(els.skillCase, item.id);
+    state.skill = {
+      mode: item.type,
+      item: item,
+      selections: {},
+      responses: {},
+      scored: false,
+      result: null,
+      feedbackGuide: null,
+      startedAt: new Date().toISOString()
+    };
+    renderSkill();
+  }
+
+  function skillMatchesTarget(drill, target) {
+    var text = [
+      drill.type,
+      drill.title,
+      drill.prompt,
+      drill.modelAnswer,
+      (drill.tags || []).join(" ")
+    ].join(" ").toLowerCase();
+    var needle = String(target || "").toLowerCase();
+    if (!needle) return false;
+    if (needle === "ethics") return /ethic|risk|safety|legal|consent|document/.test(text);
+    if (needle === "systemic roles") return /systemic|role|assessment|treatment|termination/.test(text);
+    return text.indexOf(needle) !== -1;
+  }
+
   function openWeakPractice() {
     showView("skill");
-    els.skillMode.value = "weak";
+    setSelectIfOption(els.skillMode, "quick");
     populateSkillCases();
-    state.skill = { mode: "weak", item: null, scored: false, result: null };
-    renderSkill();
+    startSkillDrill({ weak: true });
   }
 
   function startWeakQuiz(model) {
@@ -3199,13 +3669,13 @@
 
   function labelForSkillMode(mode) {
     var labels = {
-      modelCompare: "Model Compare",
-      responsePractice: "Therapist Response",
-      bowenTrainer: "Bowen Trainer",
-      eftMapper: "EFT Cycle Mapper",
-      nextIntervention: "Next Intervention",
-      ethicsScanner: "Ethics Scanner",
-      weak: "Weak Area Practice"
+      modelCompare: "Case Conceptualization",
+      responsePractice: "Therapist Language",
+      bowenTrainer: "Bowen Process Map",
+      eftMapper: "EFT Cycle Map",
+      nextIntervention: "Next-Step Plan",
+      ethicsScanner: "Risk / Ethics Review",
+      weak: "Weak-Area Worksheet"
     };
     return labels[mode] || mode;
   }
@@ -3255,6 +3725,18 @@
         return value && value.length ? value.slice(0, 3).join(", ") : "None";
       } }
     ]);
+
+    if (els.clinicHistory) {
+      els.clinicHistory.innerHTML = historyTable(profile.clinicAttempts || [], [
+        { key: "date", label: "Date", render: formatDate },
+        { key: "title", label: "Session", render: function (value) { return value || "Daily Clinic"; } },
+        { key: "mode", label: "Mode", render: function (value) { return value || "Branching Session"; } },
+        { key: "scorePercent", label: "Score", render: function (value) { return value + "%"; } },
+        { key: "missedAreas", label: "Practice", render: function (value) {
+          return value && value.length ? value.slice(0, 3).join(", ") : "None";
+        } }
+      ]);
+    }
   }
 
   function renderMasteryDashboard(profile) {

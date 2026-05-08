@@ -24,7 +24,7 @@
   </head>
   <body>
     <div class="app-shell">
-      <aside class="app-sidebar" aria-label="Study Lab navigation">
+      <aside class="app-sidebar" id="studySidebar" aria-label="Study Lab navigation">
         <header class="topbar">
           <div class="brand">
             <div class="brand-mark" aria-hidden="true">LM</div>
@@ -39,6 +39,10 @@
           <button class="is-active" type="button" data-view-button="dashboard">
             <span class="nav-icon" aria-hidden="true">⌂</span>
             <span>Dashboard</span>
+          </button>
+          <button type="button" data-view-button="clinic">
+            <span class="nav-icon" aria-hidden="true">DC</span>
+            <span>Daily Clinic</span>
           </button>
           <button type="button" data-view-button="guide">
             <span class="nav-icon" aria-hidden="true">▤</span>
@@ -121,6 +125,11 @@
 
       <div class="content-shell">
         <div class="content-crumb" aria-live="polite">
+          <button class="menu-toggle" id="sidebarToggle" type="button" aria-label="Open menu" aria-expanded="true" aria-controls="studySidebar">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </button>
           <span id="viewCrumbKicker">TODAY</span>
           <span aria-hidden="true">/</span>
           <strong id="viewCrumbTitle">Study Dashboard</strong>
@@ -138,12 +147,8 @@
 
           <div class="stats-grid" id="dashboardStats"></div>
 
-          <section class="panel today-panel">
-            <h3>Daily Clinic Mode</h3>
-            <div id="todayStudyPath"></div>
-          </section>
-
           <div class="action-row">
+            <button type="button" data-jump-view="clinic">Daily Clinic</button>
             <button type="button" data-jump-view="guide">Open Study Guide</button>
             <button type="button" data-jump-view="quiz">Start Questionnaire</button>
             <button type="button" data-jump-view="scenarios">Practice Scenarios</button>
@@ -166,6 +171,42 @@
             <h3>Automatic Sync</h3>
             <div id="syncPanel"></div>
           </section>
+        </section>
+
+        <section class="view" id="clinic" aria-labelledby="clinicTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Session Practice</p>
+              <h2 id="clinicTitle">Daily Clinic</h2>
+              <p class="fine-print-left">A short branching therapy session: hear the client, choose your next response, get supervisor feedback, then continue the session.</p>
+            </div>
+            <form class="toolbar" id="clinicSetup">
+              <label for="clinicLevel">Level</label>
+              <select id="clinicLevel">
+                <option value="learn">Learn</option>
+                <option value="practice" selected>Practice</option>
+                <option value="exam">Exam</option>
+              </select>
+              <label for="clinicFocus">Focus</label>
+              <select id="clinicFocus">
+                <option value="balanced">Balanced</option>
+                <option value="weak">Weak area</option>
+                <option value="Bowen">Bowen</option>
+                <option value="EFT">EFT</option>
+                <option value="Ethics">Ethics</option>
+                <option value="Systemic Roles">Systemic Roles</option>
+              </select>
+              <button type="submit">Start Session</button>
+            </form>
+          </div>
+
+          <div class="clinic-layout">
+            <div class="practice-card" id="todayStudyPath"></div>
+            <aside class="panel scenario-notes">
+              <h3>Supervisor Panel</h3>
+              <div id="clinicCoach"></div>
+            </aside>
+          </div>
         </section>
 
         <section class="view" id="guide" aria-labelledby="guideTitle">
@@ -192,6 +233,7 @@
             <div>
               <p class="eyebrow">Recall</p>
               <h2 id="quizTitle">Questionnaire</h2>
+              <p class="fine-print-left">Fast multiple-choice exam recall with hints, explanations, and spaced review.</p>
             </div>
             <form class="toolbar" id="quizSetup">
               <label for="quizMode">Mode</label>
@@ -222,7 +264,7 @@
                 <option value="40">40</option>
                 <option value="all">All matching</option>
               </select>
-              <button type="submit">Start</button>
+              <button type="submit">Start Exam Set</button>
             </form>
           </div>
 
@@ -277,37 +319,37 @@
             <div>
               <p class="eyebrow">Clinical Skills</p>
               <h2 id="skillTitle">Skill Lab</h2>
+              <p class="fine-print-left">Fast clinical practice with quick rounds, instant feedback, streaks, and short therapist-response moments.</p>
+            </div>
+            <div class="skill-tabbar" role="tablist" aria-label="Skill Lab modes">
+              <button class="is-active" type="button" data-skill-tab="quick">Quick Play</button>
+              <button type="button" data-skill-tab="simulator">Simulator</button>
             </div>
             <form class="toolbar" id="skillSetup">
-              <label for="skillMode">Mode</label>
-              <select id="skillMode">
-                <option value="modelCompare">What Would Each Model Do?</option>
-                <option value="responsePractice">Therapist Response Practice</option>
-                <option value="bowenTrainer">Bowen Genogram / Triangle Trainer</option>
-                <option value="eftMapper">EFT Cycle Mapper</option>
-                <option value="nextIntervention">Next Best Intervention</option>
-                <option value="ethicsScanner">Ethics/Risk Scanner</option>
-                <option value="weak">Weak Area Practice</option>
+              <label class="is-hidden-control" for="skillMode">Mode</label>
+              <select class="is-hidden-control" id="skillMode" aria-hidden="true" tabindex="-1">
+                <option value="quick">Quick Play</option>
+                <option value="simulator">Simulator</option>
               </select>
-              <label for="skillDifficulty">Difficulty</label>
+              <label for="skillDifficulty">Level</label>
               <select id="skillDifficulty">
                 <option value="mixed">Mixed</option>
                 <option value="easy">Easy</option>
                 <option value="medium">Medium</option>
                 <option value="hard">Hard</option>
               </select>
-              <label for="skillCase">Drill</label>
-              <select id="skillCase">
-                <option value="random">Random drill</option>
+              <label class="is-hidden-control" for="skillCase">Round</label>
+              <select class="is-hidden-control" id="skillCase" aria-hidden="true" tabindex="-1">
+                <option value="random">Random round</option>
               </select>
-              <button type="submit">Load</button>
+              <button type="submit">Start Round</button>
             </form>
           </div>
 
           <div class="skill-layout">
             <div class="practice-card" id="skillCard"></div>
             <aside class="panel scenario-notes">
-              <h3>Skill Score</h3>
+              <h3>Skill Run</h3>
               <div id="skillScore"></div>
             </aside>
           </div>
@@ -410,6 +452,10 @@
             <section class="panel">
               <h3>Skill Lab History</h3>
               <div id="skillHistory"></div>
+            </section>
+            <section class="panel">
+              <h3>Daily Clinic History</h3>
+              <div id="clinicHistory"></div>
             </section>
           </div>
         </section>
