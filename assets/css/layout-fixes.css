@@ -1,0 +1,23 @@
+/* Give workbench-style tabs the full content rail after the sidebar collapses. */
+.app-shell:has(#quiz.is-active) .content-shell > main,
+.app-shell:has(#scenarios.is-active) .content-shell > main,
+.app-shell:has(#skill.is-active) .content-shell > main,
+.app-shell:has(#progress.is-active) .content-shell > main {
+  width: 100%;
+}
+
+#quiz .quiz-shell,
+#scenarios .case-library,
+#scenarios .scenario-layout,
+#skill .skill-layout,
+#progress .dashboard-layout {
+  width: 100%;
+}
+
+@media (min-width: 1180px) {
+  #scenarios .scenario-layout,
+  #skill .skill-layout,
+  #progress .dashboard-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.42fr);
+  }
+}
