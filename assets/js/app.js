@@ -88,6 +88,148 @@
       clue: "The therapist uses enactment, present emotional experience, and attachment vulnerability."
     }
   ];
+  MATCH_ROUNDS = MATCH_ROUNDS.concat([
+    {
+      id: "match-bowen-cutoff-boundary",
+      title: "Boundary or Cutoff",
+      model: "Bowen",
+      context: "An individual client is unsure whether distance from family is healthy or reactive.",
+      dialogue: [
+        { speaker: "Client", text: "I feel calm only when I do not answer anyone in my family." },
+        { speaker: "Therapist", text: "Let's not rush to call that peace. It may be distance that lowers anxiety without changing the relationship process." },
+        { speaker: "Client", text: "So cutting them off does not automatically mean I am differentiated?" },
+        { speaker: "Therapist", text: "Right. We can work on a clearer self-position that does not require disappearing." }
+      ],
+      answer: "Bowen",
+      clue: "The therapist distinguishes emotional cutoff from differentiation and focuses on self-definition under family anxiety."
+    },
+    {
+      id: "match-bowen-family-projection",
+      title: "The Watched Child",
+      model: "Bowen",
+      context: "Parents monitor one child's normal mistakes after a family transition.",
+      dialogue: [
+        { speaker: "Parent", text: "Since the move, every small grade drop makes us worry she is falling apart." },
+        { speaker: "Therapist", text: "Let's map how parental anxiety is getting focused on her and how that may shape her functioning." },
+        { speaker: "Parent", text: "She has started asking us before making any tiny decision." },
+        { speaker: "Therapist", text: "That pattern can become part of the family projection process, so we will work on lowering reactivity around her." }
+      ],
+      answer: "Bowen",
+      clue: "Family projection process, parental anxiety focused on a child, and lowering reactivity are Bowen clues."
+    },
+    {
+      id: "match-eft-attachment-injury",
+      title: "The Missed Hospital Call",
+      model: "EFT",
+      context: "A couple is stuck around a past moment of perceived abandonment.",
+      dialogue: [
+        { speaker: "Partner A", text: "When I was in the ER and you did not answer, something broke in me." },
+        { speaker: "Therapist", text: "That moment became an attachment injury. Before repair, we need to slow the hurt and the impact." },
+        { speaker: "Partner B", text: "I thought apologizing once should have ended it." },
+        { speaker: "Therapist", text: "The apology needs to reach the place that still asks, 'Will you be there when I am scared?'" }
+      ],
+      answer: "EFT",
+      clue: "Attachment injury repair, vulnerable hurt, and responsiveness needs are EFT markers."
+    },
+    {
+      id: "match-eft-withdrawer-reengagement",
+      title: "The Quiet Partner Speaks",
+      model: "EFT",
+      context: "A withdrawn partner begins to share the fear underneath shutting down.",
+      dialogue: [
+        { speaker: "Partner B", text: "When she gets angry, I go blank because I am sure I will fail her again." },
+        { speaker: "Therapist", text: "Can we stay with that fear of failing her, not as avoidance, but as the softer place underneath the shutdown?" },
+        { speaker: "Partner A", text: "I never knew it was fear. I thought you did not care." },
+        { speaker: "Therapist", text: "This is the cycle changing: the protection is becoming a clearer attachment signal." }
+      ],
+      answer: "EFT",
+      clue: "The therapist accesses primary emotion under withdrawal and reframes the cycle in attachment terms."
+    },
+    {
+      id: "match-ethics-telehealth-location",
+      title: "Telehealth Across State Lines",
+      model: "Ethics",
+      context: "A client logs into telehealth while traveling.",
+      dialogue: [
+        { speaker: "Client", text: "I am in another state for a few weeks, but we can just keep meeting like normal." },
+        { speaker: "Therapist", text: "Before we continue, I need to verify your physical location, emergency resources, and whether I am permitted to provide services there." },
+        { speaker: "Client", text: "Does that really matter if you are still in your office?" },
+        { speaker: "Therapist", text: "Yes. Location, consent, licensing rules, and emergency planning are part of ethical telehealth practice." }
+      ],
+      answer: "Ethics",
+      clue: "Jurisdiction, telehealth consent, emergency planning, and scope of practice signal an ethics-first answer."
+    },
+    {
+      id: "match-ethics-court-letter",
+      title: "The Custody Letter",
+      model: "Ethics",
+      context: "A parent asks the treating therapist for a custody opinion.",
+      dialogue: [
+        { speaker: "Client", text: "Can you write the court that I am obviously the better parent?" },
+        { speaker: "Therapist", text: "I need to be careful about my treating role, confidentiality, records, and the limits of any opinion I can ethically provide." },
+        { speaker: "Client", text: "But you know me better than anyone." },
+        { speaker: "Therapist", text: "That is exactly why role clarity matters. A forensic opinion is different from treatment." }
+      ],
+      answer: "Ethics",
+      clue: "Court involvement, role conflict, confidentiality, records, and forensic limits make ethics the priority."
+    },
+    {
+      id: "match-systemic-culture-context",
+      title: "Respect Means Staying Close",
+      model: "Systemic Roles",
+      context: "A couple disagrees about boundaries with extended family.",
+      dialogue: [
+        { speaker: "Partner A", text: "In my family, not answering every call is disrespect." },
+        { speaker: "Partner B", text: "In mine, constant calls mean no couple boundary." },
+        { speaker: "Therapist", text: "Before choosing a technique, I want to understand what closeness, respect, and boundaries mean in each family context." },
+        { speaker: "Therapist", text: "Then we can build a plan that fits your values and your couple system." }
+      ],
+      answer: "Systemic Roles",
+      clue: "The therapist broadens assessment to culture, context, values, and the client system before selecting an intervention."
+    },
+    {
+      id: "match-systemic-feedback-loop",
+      title: "The Symptom Loop",
+      model: "Systemic Roles",
+      context: "A child's stomachaches appear around parent conflict.",
+      dialogue: [
+        { speaker: "Parent", text: "The stomachaches are random. They just happen on school mornings." },
+        { speaker: "Therapist", text: "Let's look at the sequence: conflict, stomachache, staying home, and how each response affects the next one." },
+        { speaker: "Child", text: "When I stay home, they stop arguing for a while." },
+        { speaker: "Therapist", text: "That does not mean anyone is causing it on purpose. It means the system has a feedback loop we can change." }
+      ],
+      answer: "Systemic Roles",
+      clue: "Circular causality, interactional sequence, feedback loops, and non-blaming systemic assessment point to Systemic Roles."
+    },
+    {
+      id: "match-ethics-coercive-control",
+      title: "Too Afraid To Speak",
+      model: "Ethics",
+      context: "A couple requests communication work, but safety cues emerge.",
+      dialogue: [
+        { speaker: "Partner A", text: "I can talk as long as I do not say anything that makes him angry later." },
+        { speaker: "Therapist", text: "I want to pause the communication exercise and assess safety and choice in the relationship." },
+        { speaker: "Partner B", text: "We came here for tools, not accusations." },
+        { speaker: "Therapist", text: "Tools can be helpful, but coercion or retaliation risk has to be assessed before vulnerable couple work." }
+      ],
+      answer: "Ethics",
+      clue: "Safety assessment and possible coercive control override routine couple interventions."
+    },
+    {
+      id: "match-eft-attachment-reframe",
+      title: "Anger as Protest",
+      model: "EFT",
+      context: "One partner criticizes while the other hears only attack.",
+      dialogue: [
+        { speaker: "Partner A", text: "I get loud because I feel like I am alone in this marriage." },
+        { speaker: "Therapist", text: "So the criticism is not just attack. It is a protest when the bond feels threatened." },
+        { speaker: "Partner B", text: "I only hear that I am failing." },
+        { speaker: "Therapist", text: "Let's help both of you hear the attachment message hidden inside the cycle." }
+      ],
+      answer: "EFT",
+      clue: "Attachment reframing, protest, bond threat, and negative cycle language are EFT clues."
+    }
+  ]);
   var MATCH_OPTIONS = ["Bowen", "EFT", "Ethics", "Systemic Roles"];
   var WHAT_TO_SAY_NEXT_CASES = [
     {
@@ -190,6 +332,275 @@
       modelAnswer: "I tracked the pursue-withdraw cycle, slowed blame, reflected each partner's protection, and helped them speak from primary attachment fear. I chose enactments only after enough safety was present, then ended by consolidating the new cycle language and one small practice step."
     }
   ];
+  WHAT_TO_SAY_NEXT_CASES = WHAT_TO_SAY_NEXT_CASES.concat([
+    {
+      id: "saynext-bowen-adult-child-triangle",
+      title: "Adult Child Pulled Into the Middle",
+      difficulty: "medium",
+      clientType: "Family",
+      focus: ["Bowen", "Triangle", "I-position"],
+      presentingProblem: "An adult child is being asked to manage conflict between a parent and sibling.",
+      prompt: "Choose responses that keep the therapist detriangled, calm, and focused on process rather than blame.",
+      turns: [
+        {
+          client: "My mom calls me every night about my brother. If I do not calm her down, everything blows up.",
+          choices: [
+            { text: "So part of your role has become lowering anxiety between your mom and brother.", score: 100, feedback: "Strong Bowen frame. It tracks the triangle without blaming anyone.", followup: "The client says, 'Yes. I am like the family pressure valve.'" },
+            { text: "You should tell your mother she is being manipulative.", score: 30, feedback: "This escalates blame and pulls the client into another reactive position.", followup: "The client says, 'That would start a war.'" },
+            { text: "Let's focus only on how your brother needs to change.", score: 35, feedback: "This keeps the identified problem on one person and misses the triangle.", followup: "The client says, 'Everyone already does that.'" },
+            { text: "Can you block your mother's number for the rest of the month?", score: 45, feedback: "Distance may reduce anxiety, but Bowen first distinguishes thoughtful boundaries from cutoff.", followup: "The client says, 'That sounds peaceful but also extreme.'" }
+          ],
+          topic: "Triangle"
+        },
+        {
+          client: "If I stop answering, I feel like a bad daughter.",
+          choices: [
+            { text: "Let's slow the guilt down and look at what you believe your responsibility is in the family system.", score: 100, feedback: "Strong. It helps the client observe fusion and responsibility without taking over.", followup: "The client says, 'I guess I believe I am responsible for everyone's mood.'" },
+            { text: "That guilt is irrational, so do not listen to it.", score: 25, feedback: "Dismissive. It misses the emotional process organizing the role.", followup: "The client says, 'It still feels real though.'" },
+            { text: "Call your mother now and confront her during session.", score: 45, feedback: "Too fast. Direct contact can be useful, but not before lowering reactivity and forming an I-position.", followup: "The client tenses and says, 'I am not ready.'" },
+            { text: "Your brother should be in treatment instead of you.", score: 35, feedback: "This relocates the problem and misses the client's part in the pattern.", followup: "The client says, 'Maybe, but I am the one who keeps answering.'" }
+          ],
+          topic: "Fusion"
+        },
+        {
+          client: "I usually tell my brother what Mom said, then he gets mad at me too.",
+          choices: [
+            { text: "That sounds like the triangle tightens when you become the messenger.", score: 100, feedback: "Strong process observation. It names the sequence clearly.", followup: "The client nods: 'I never thought of myself as the messenger, but I am.'" },
+            { text: "Maybe your brother deserves to know everything she says.", score: 45, feedback: "Tempting, but it does not examine the role the client is playing.", followup: "The client says, 'That is what I tell myself.'" },
+            { text: "You need to convince them to talk directly tonight.", score: 55, feedback: "Direct communication may help eventually, but the client first needs a less reactive position.", followup: "The client says, 'I would still be arranging it.'" },
+            { text: "Let's diagnose which family member is more anxious.", score: 30, feedback: "Bowen looks at process, not ranking blame.", followup: "The client says, 'They would both say it is the other one.'" }
+          ],
+          topic: "Detriangling"
+        },
+        {
+          client: "If I say, 'Talk to him directly,' Mom says I am abandoning her.",
+          choices: [
+            { text: "Let's build an I-position that stays connected without accepting the messenger role.", score: 100, feedback: "Strong. It supports differentiation and connection.", followup: "The client says, 'Maybe I can be warm without fixing it.'" },
+            { text: "Tell her she is wrong and hang up quickly.", score: 35, feedback: "That may be reactive cutoff rather than differentiation.", followup: "The client says, 'I would feel awful after.'" },
+            { text: "Reassure her for as long as she needs so she feels safe.", score: 40, feedback: "This keeps the old role intact.", followup: "The client sighs: 'That is what I already do.'" },
+            { text: "Ask her to promise she will never involve you again.", score: 45, feedback: "An all-or-nothing demand may increase reactivity.", followup: "The client says, 'She would never promise that.'" }
+          ],
+          topic: "I-position"
+        },
+        {
+          client: "What would an I-position even sound like?",
+          choices: [
+            { text: "Something like: I care about you, and I am not going to carry messages between you and him.", score: 100, feedback: "Strong. It is clear, connected, and self-defined.", followup: "The client says, 'That sounds firm but not cruel.'" },
+            { text: "Something like: You are ruining my life by calling me.", score: 25, feedback: "This is emotionally reactive and likely to intensify the pattern.", followup: "The client winces: 'That is what I want to scream.'" },
+            { text: "Something like: I will help only if you admit you are the problem.", score: 30, feedback: "This makes change conditional on blame.", followup: "The client says, 'She would attack me for that.'" },
+            { text: "Something like: I will never discuss family again.", score: 45, feedback: "That is more cutoff-like than differentiated contact.", followup: "The client says, 'That feels too big.'" }
+          ],
+          topic: "I-position wording"
+        },
+        {
+          client: "I am scared she will cry and I will give in.",
+          choices: [
+            { text: "Let's plan for your own reactivity when she gets upset, not just the words you will say.", score: 100, feedback: "Strong. Bowen work prepares the client to manage self under pressure.", followup: "The client says, 'I need that. Her tears undo me.'" },
+            { text: "Then wait until you feel no anxiety at all.", score: 40, feedback: "The goal is thoughtful functioning in anxiety, not zero anxiety.", followup: "The client says, 'That day may never come.'" },
+            { text: "Ask your sibling to handle the call for you.", score: 35, feedback: "That may simply move the triangle around.", followup: "The client says, 'Then he would be mad at me too.'" },
+            { text: "Use a softer voice so she cannot get upset.", score: 45, feedback: "Tone helps, but it cannot control the parent's response.", followup: "The client says, 'I keep trying to manage her reaction.'" }
+          ],
+          topic: "Self-regulation"
+        },
+        {
+          client: "So the goal is not to disappear. It is to stop being the messenger.",
+          choices: [
+            { text: "Exactly. We can track the triangle, practice your I-position, and review what happens after you try it.", score: 100, feedback: "Strong consolidation. It names the process and next practice.", followup: "The client says, 'That feels like something I can actually practice.'" },
+            { text: "Right, and your mother needs to change before anything gets better.", score: 35, feedback: "This puts the change outside the client's functioning.", followup: "The client says, 'That makes me feel stuck again.'" },
+            { text: "Right, so end all family contact for now.", score: 35, feedback: "Too broad and cutoff-leaning for this case.", followup: "The client says, 'That is not what I want.'" },
+            { text: "Right, now we can stop discussing family process.", score: 30, feedback: "The insight needs practice and follow-up.", followup: "The client says, 'I still need help doing it.'" }
+          ],
+          topic: "Consolidation"
+        }
+      ],
+      summaryChecklist: [
+        { label: "Named the triangle", keywords: ["triangle", "messenger", "middle", "third"] },
+        { label: "Tracked anxiety or fusion", keywords: ["anxiety", "fusion", "reactivity", "responsibility"] },
+        { label: "Used I-position language", keywords: ["i-position", "i position", "clear", "connected", "self"] },
+        { label: "Avoided blame or cutoff", keywords: ["without blame", "no blame", "cutoff", "connected", "not disappear"] },
+        { label: "Planned practice", keywords: ["practice", "plan", "review", "try", "next"] }
+      ],
+      modelAnswer: "I tracked how the client was pulled into a triangle as the messenger, helped them observe guilt and reactivity, and practiced a connected I-position. I avoided blaming the mother or brother and focused on differentiated contact plus a realistic practice step."
+    },
+    {
+      id: "saynext-systemic-teen-scapegoat",
+      title: "Teen Cast as the Problem",
+      difficulty: "easy",
+      clientType: "Family",
+      focus: ["Systemic Roles", "Balanced alliance", "Assessment"],
+      presentingProblem: "Parents bring a teen to therapy and insist the teen's disrespect is the family's only problem.",
+      prompt: "Choose responses that build alliance with the whole system and broaden the focus beyond one identified client.",
+      turns: [
+        {
+          client: "He is the reason we are here. If he would stop being disrespectful, we would be fine.",
+          choices: [
+            { text: "I want to understand his behavior and also the pattern that happens around it in the family.", score: 100, feedback: "Strong systemic opening. It includes the concern without scapegoating.", followup: "One parent says, 'The pattern is that he pushes buttons.'" },
+            { text: "You are right, he sounds like the whole problem.", score: 10, feedback: "This joins the scapegoating frame.", followup: "The teen sinks lower in the chair." },
+            { text: "Parents are usually the real problem, so let's focus on you two.", score: 20, feedback: "This flips blame rather than broadening the system.", followup: "The parents become defensive." },
+            { text: "Let's ignore behavior and only talk about feelings.", score: 45, feedback: "Feelings matter, but the behavior and interactional sequence also matter.", followup: "The parent says, 'The behavior is why we came.'" }
+          ],
+          topic: "Balanced alliance"
+        },
+        {
+          client: "I only yell because they start lecturing me the second I walk in.",
+          choices: [
+            { text: "So one sequence may be lecture, pressure, yelling, then more pressure. Did I get that close?", score: 100, feedback: "Strong. It maps the interaction without declaring a villain.", followup: "The teen says, 'Yeah, every day.'" },
+            { text: "Yelling is unacceptable, so you need consequences first.", score: 45, feedback: "Accountability may matter, but this skips sequence assessment.", followup: "The teen says, 'See, no one listens.'" },
+            { text: "Your parents probably lecture because you deserve it.", score: 10, feedback: "This sides with the parents.", followup: "The teen stops talking." },
+            { text: "Let's decide who starts it most often.", score: 35, feedback: "That turns assessment into a blame contest.", followup: "The family immediately argues." }
+          ],
+          topic: "Interactional sequence"
+        },
+        {
+          client: "Nobody asked what happens at school. I am already exhausted before I get home.",
+          choices: [
+            { text: "That context matters. Let's include school stress in the family pattern we are assessing.", score: 100, feedback: "Strong. It broadens context and helps the teen feel included.", followup: "The teen says, 'Thank you. It is not just attitude.'" },
+            { text: "School stress is separate, so keep it out of family therapy.", score: 25, feedback: "Systemic work includes context around the symptom.", followup: "The teen shrugs and goes quiet." },
+            { text: "Then your parents should stop all expectations.", score: 35, feedback: "This overcorrects and sides with one member.", followup: "A parent says, 'That is not realistic.'" },
+            { text: "Let's diagnose you before discussing school.", score: 35, feedback: "Diagnosis may be relevant, but immediate context and sequence are available.", followup: "The teen says, 'I knew this would happen.'" }
+          ],
+          topic: "Context"
+        },
+        {
+          client: "We just need a plan. We cannot keep doing this every night.",
+          choices: [
+            { text: "Let's create one small evening experiment and agree how each person will notice their part in the sequence.", score: 100, feedback: "Strong. It turns assessment into a shared, testable plan.", followup: "The family agrees to try a 20-minute decompression window before chores." },
+            { text: "The teen should sign a behavior contract right now.", score: 50, feedback: "A contract may help later, but shared sequence change is better first.", followup: "The teen says, 'So it is still all me.'" },
+            { text: "The parents should stop enforcing chores for now.", score: 40, feedback: "This may reduce conflict but avoids the family learning a new pattern.", followup: "One parent says, 'That will explode later.'" },
+            { text: "No plan until everyone admits fault.", score: 20, feedback: "This sets up blame and stalls collaboration.", followup: "The room gets tense." }
+          ],
+          topic: "Collaborative plan"
+        },
+        {
+          client: "What if he does not follow it?",
+          choices: [
+            { text: "Then we treat it as information about the pattern and revise the plan, while keeping expectations clear.", score: 100, feedback: "Strong. It keeps accountability and systemic curiosity together.", followup: "The parent says, 'So not just success or failure.'" },
+            { text: "Then therapy is not working.", score: 30, feedback: "Too all-or-nothing.", followup: "The family looks discouraged." },
+            { text: "Then he proves he is the problem.", score: 10, feedback: "This returns to scapegoating.", followup: "The teen says, 'There it is.'" },
+            { text: "Then ignore the plan and move to another topic.", score: 25, feedback: "Missed follow-up. The response to breakdown is clinically important.", followup: "The parent says, 'That is what we always do.'" }
+          ],
+          topic: "Feedback loop"
+        },
+        {
+          client: "I can try if they do not start with a lecture.",
+          choices: [
+            { text: "Good. Let's name each person's first small move: decompression, clear request, and a direct response.", score: 100, feedback: "Strong close. It assigns shared, observable parts without blame.", followup: "The family leaves with a concrete experiment." },
+            { text: "Good, so your parents have to change first.", score: 35, feedback: "This shifts the whole burden to the parents.", followup: "The parents push back." },
+            { text: "Good, so you have to promise perfect follow-through.", score: 35, feedback: "Perfection is unrealistic and pressure-heavy.", followup: "The teen says, 'I cannot promise perfect.'" },
+            { text: "Good, then the problem is solved.", score: 25, feedback: "The plan needs practice and review.", followup: "Everyone looks unsure." }
+          ],
+          topic: "Shared next step"
+        },
+        {
+          client: "That sounds better than everyone staring at me like I am the broken one.",
+          choices: [
+            { text: "Let's hold onto that. The problem is the pattern we are changing together, not one person being broken.", score: 100, feedback: "Strong systemic reframe. It protects dignity and shared responsibility.", followup: "The teen looks relieved, and the parents nod." },
+            { text: "Try not to be so sensitive to how people look at you.", score: 20, feedback: "Invalidating and individualizing.", followup: "The teen goes quiet." },
+            { text: "Your parents should apologize before we continue.", score: 35, feedback: "Repair may matter, but this risks forcing a moment before the family is ready.", followup: "The parents look cornered." },
+            { text: "Now we can stop talking about the family pattern.", score: 25, feedback: "The reframe needs repetition and practice.", followup: "The teen says, 'I hope it actually changes.'" }
+          ],
+          topic: "Systemic reframe"
+        }
+      ],
+      summaryChecklist: [
+        { label: "Balanced alliance", keywords: ["balanced", "alliance", "everyone", "whole family", "system"] },
+        { label: "Mapped interactional sequence", keywords: ["sequence", "pattern", "loop", "interaction"] },
+        { label: "Included context", keywords: ["context", "school", "stress", "routine"] },
+        { label: "Avoided scapegoating", keywords: ["scapegoat", "identified", "not blame", "no blame"] },
+        { label: "Made a shared experiment", keywords: ["experiment", "plan", "each person", "shared", "practice"] }
+      ],
+      modelAnswer: "I kept alliance with the parents and teen, mapped the lecture-pressure-yelling sequence, included school stress and routines, avoided making the teen the only problem, and ended with a shared behavioral experiment the family can review."
+    },
+    {
+      id: "saynext-ethics-secret-affair",
+      title: "Secret Before Couple Session",
+      difficulty: "hard",
+      clientType: "Couple",
+      focus: ["Ethics", "Couple therapy frame", "Secrets policy"],
+      presentingProblem: "One partner privately discloses an affair minutes before a couple session and asks the therapist not to tell.",
+      prompt: "Choose responses that protect consent, confidentiality, balanced alliance, and the treatment frame.",
+      turns: [
+        {
+          client: "Before my spouse comes in, I need to tell you I had an affair. You cannot say anything.",
+          choices: [
+            { text: "Before I agree to secrecy, we need to review the privacy and secrets policy for couple therapy.", score: 100, feedback: "Strong ethics-first response. It avoids making a promise that may break the treatment frame.", followup: "The partner says, 'I thought individual privacy still applied.'" },
+            { text: "I promise I will never bring it up.", score: 10, feedback: "Unsafe. This may undermine informed consent and the couple therapy frame.", followup: "The partner relaxes, but the therapist is now boxed into a secret alliance." },
+            { text: "I will tell your spouse as soon as they walk in.", score: 35, feedback: "Too abrupt. Disclosure needs a clinical and ethical process.", followup: "The partner says, 'Then I should not have told you.'" },
+            { text: "Let's ignore it and focus on communication today.", score: 20, feedback: "Avoidance leaves a major consent and alliance issue active.", followup: "The partner says, 'Good, I do not want it touched.'" }
+          ],
+          topic: "Secrets policy"
+        },
+        {
+          client: "If you make me tell, I will quit therapy.",
+          choices: [
+            { text: "I hear the fear. I also need to be clear about what information I can hold while treating the relationship.", score: 100, feedback: "Strong. It validates while keeping the professional frame.", followup: "The partner says, 'So you are saying this affects treatment?'" },
+            { text: "Then therapy is over immediately.", score: 35, feedback: "Too abrupt. Termination or referral may be needed, but first clarify options.", followup: "The partner says, 'That feels like punishment.'" },
+            { text: "Fine, we can keep it secret if you promise to end the affair.", score: 25, feedback: "This trades ethics for a bargain and keeps a secret alliance.", followup: "The partner says, 'Okay, so we never discuss it?'" },
+            { text: "Your spouse deserves to know, so I am on their side now.", score: 20, feedback: "This damages balanced alliance and shifts into blame.", followup: "The partner shuts down." }
+          ],
+          topic: "Balanced frame"
+        },
+        {
+          client: "I just need help deciding whether to stay married.",
+          choices: [
+            { text: "That may be important work, but the couple therapy consent frame has to be clear before we continue together.", score: 100, feedback: "Strong sequencing. Consent and role clarity come before treatment moves.", followup: "The partner says, 'What are my options?'" },
+            { text: "Let's do discernment counseling secretly inside the couple therapy.", score: 30, feedback: "Role drift. The service and consent frame need to be explicit.", followup: "The partner says, 'So my spouse will not know what we are doing?'" },
+            { text: "EFT will solve this if we deepen attachment needs.", score: 25, feedback: "Model work cannot bypass consent and secrets-policy concerns.", followup: "The partner says, 'I do not want to deepen anything yet.'" },
+            { text: "You should leave the marriage if you are unsure.", score: 15, feedback: "Directive and outside the therapist's role.", followup: "The partner says, 'I do not want you deciding for me.'" }
+          ],
+          topic: "Informed consent"
+        },
+        {
+          client: "Could we just meet individually for a while and not tell them why?",
+          choices: [
+            { text: "We would need a clear agreement about any individual contact, its purpose, and how it affects couple therapy.", score: 100, feedback: "Strong. It keeps role, consent, and records clear.", followup: "The partner says, 'So this cannot be hidden inside the couple work.'" },
+            { text: "Yes, individual sessions are automatically private from the spouse.", score: 25, feedback: "Too absolute. Couple therapy requires a clear policy about individual contacts.", followup: "The partner says, 'Perfect, then I can keep both going.'" },
+            { text: "No therapist ever meets individually with couple clients.", score: 45, feedback: "Too rigid. Some do, but only with clear consent and policy.", followup: "The partner says, 'But we did an individual intake.'" },
+            { text: "Let your spouse decide your individual treatment.", score: 20, feedback: "This gives one partner inappropriate control.", followup: "The partner says, 'That does not feel right either.'" }
+          ],
+          topic: "Role clarity"
+        },
+        {
+          client: "What if I tell them but they explode?",
+          choices: [
+            { text: "We need to assess safety, timing, and support before any disclosure plan.", score: 100, feedback: "Strong. It does not force a disclosure without risk assessment.", followup: "The partner says, 'There has never been violence, but I am scared of the reaction.'" },
+            { text: "Explosions are part of honesty, so just do it.", score: 15, feedback: "This ignores safety and clinical pacing.", followup: "The partner says, 'That makes me want to hide it more.'" },
+            { text: "If they explode, that proves they caused the affair.", score: 10, feedback: "Blaming and unethical.", followup: "The partner says, 'That is not fair.'" },
+            { text: "Disclosure is never appropriate in couple therapy.", score: 35, feedback: "Too absolute. The issue is how to handle it ethically and safely.", followup: "The partner says, 'So what do I do?'" }
+          ],
+          topic: "Safety and pacing"
+        },
+        {
+          client: "I feel trapped. I should not have said anything.",
+          choices: [
+            { text: "I understand this feels exposing. My job is to help us handle it clearly, ethically, and without creating a hidden alliance.", score: 100, feedback: "Strong. It joins distress while naming the clinical priority.", followup: "The partner says, 'Hidden alliance. That is what this would become, isn't it?'" },
+            { text: "Yes, it would have been better not to tell me.", score: 10, feedback: "Shaming and clinically unhelpful.", followup: "The partner looks away." },
+            { text: "This is why secrets always ruin therapy.", score: 25, feedback: "Overgeneralized and blaming.", followup: "The partner says, 'Now I feel judged.'" },
+            { text: "Let's just bring your spouse in and see what happens.", score: 40, feedback: "Too vague. The therapist needs a deliberate plan.", followup: "The partner says, 'That sounds risky.'" }
+          ],
+          topic: "Alliance repair"
+        },
+        {
+          client: "Okay. I need to understand the policy and maybe plan how to tell them safely.",
+          choices: [
+            { text: "Good. We will clarify the couple therapy frame, document the decision-making, and plan next steps with safety and consent in mind.", score: 100, feedback: "Strong close. It includes consent, documentation, safety, and next steps.", followup: "The partner says, 'That feels clearer, even if it is hard.'" },
+            { text: "Great, then I will script exactly what you must say.", score: 45, feedback: "Some preparation helps, but the therapist should avoid taking over the client's agency.", followup: "The partner says, 'I need help, not a command.'" },
+            { text: "Great, now the ethical issue is solved.", score: 35, feedback: "Not yet. The frame and disclosure plan still need careful handling.", followup: "The partner says, 'We have not actually done anything yet.'" },
+            { text: "Great, and I will keep the chart vague.", score: 15, feedback: "Documentation should be accurate and clinically appropriate.", followup: "The partner says, 'Is that allowed?'" }
+          ],
+          topic: "Documentation"
+        }
+      ],
+      summaryChecklist: [
+        { label: "Clarified secrets policy", keywords: ["secret", "policy", "couple therapy", "frame"] },
+        { label: "Protected informed consent", keywords: ["consent", "informed", "agreement", "role"] },
+        { label: "Avoided hidden alliance", keywords: ["hidden alliance", "alliance", "balanced", "no side"] },
+        { label: "Assessed safety and pacing", keywords: ["safety", "risk", "timing", "pace"] },
+        { label: "Documented next steps", keywords: ["document", "record", "next step", "plan"] }
+      ],
+      modelAnswer: "I did not promise secrecy or force immediate disclosure. I clarified the couple therapy frame, protected informed consent and balanced alliance, assessed safety and pacing, and planned ethically documented next steps."
+    }
+  ]);
   var PROFILE_KEY = "therapyStudyProfiles:v1";
   var ACTIVE_KEY = "therapyStudyActiveProfile:v1";
   var SCENARIO_KEY = "therapyStudyScenarioAttempts:v1";
@@ -259,6 +670,7 @@
     els.syncPanelShell = document.getElementById("syncPanelShell");
     els.syncPanel = document.getElementById("syncPanel");
     els.dashboardStats = document.getElementById("dashboardStats");
+    els.dashboardTodayPlan = document.getElementById("dashboardTodayPlan");
     els.clinicSetup = document.getElementById("clinicSetup");
     els.clinicLevel = document.getElementById("clinicLevel");
     els.clinicFocus = document.getElementById("clinicFocus");
@@ -727,6 +1139,11 @@
     var avgSkill = average(skillAttempts.map(function (attempt) { return attempt.scorePercent; }));
     var avgClinic = average(clinicAttempts.map(function (attempt) { return attempt.scorePercent; }));
     var missed = getMissedTopics(profile);
+    var due = getDueReviewItems(profile);
+    var latest = [quizAttempts[0], matchAttempts[0], scenarioAttempts[0], skillAttempts[0], clinicAttempts[0]].filter(Boolean).sort(function (a, b) {
+      return new Date(b.date || b.answeredAt || b.startedAt || 0).getTime() - new Date(a.date || a.answeredAt || a.startedAt || 0).getTime();
+    })[0];
+    var sayNextCount = WHAT_TO_SAY_NEXT_CASES.length;
 
     els.dashboardStats.innerHTML = [
       statCard(clinicAttempts.length, "Clinic rounds"),
@@ -740,6 +1157,19 @@
       statCard(skillAttempts.length, "Skill lab attempts"),
       statCard(avgSkill === null ? "--" : avgSkill + "%", "Average skill score")
     ].join("");
+
+    if (els.dashboardTodayPlan) {
+      els.dashboardTodayPlan.innerHTML = [
+        dashboardPlanItem("Role-play", sayNextCount + " What To Say Next sessions", "Practice therapist language through a back-and-forth case.", "Start What To Say Next", "saynext"),
+        dashboardPlanItem("Review", due.length ? due.length + " spaced review items due" : "No spaced review due", due.length ? "Clear the oldest missed topics first." : "Use a mixed set to keep recall warm.", due.length ? "Practice Weak Spots" : "Start Questionnaire", due.length ? "weak" : "quiz"),
+        dashboardPlanItem("Recent", latest ? latest.scorePercent + "% on " + (latest.title || latest.mode || "latest attempt") : "No attempts yet", latest ? formatDateTime(latest.date || latest.answeredAt || latest.startedAt) : "Start anywhere and this will fill in.", "Open Progress", "progress")
+      ].join("");
+      els.dashboardTodayPlan.querySelectorAll("[data-dashboard-action]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          handleDashboardAction(button.getAttribute("data-dashboard-action"));
+        });
+      });
+    }
 
     if (missed.length === 0) {
       els.focusQueue.innerHTML = "<div class=\"empty-state\">No missed topics yet.</div>";
@@ -764,6 +1194,37 @@
       return "<div class=\"source-item\"><a href=\"" + escapeHtml(resource.url) + "\" target=\"_blank\" rel=\"noreferrer\">" + escapeHtml(resource.title) + "</a><br><span>" + escapeHtml(resource.note) + "</span></div>";
     }).join("");
 
+  }
+
+  function dashboardPlanItem(label, title, detail, buttonText, action) {
+    return [
+      "<div class=\"today-plan-item\">",
+      "<span>" + escapeHtml(label) + "</span>",
+      "<strong>" + escapeHtml(title) + "</strong>",
+      "<p>" + escapeHtml(detail) + "</p>",
+      "<button class=\"secondary\" type=\"button\" data-dashboard-action=\"" + escapeHtml(action) + "\">" + escapeHtml(buttonText) + "</button>",
+      "</div>"
+    ].join("");
+  }
+
+  function handleDashboardAction(action) {
+    if (action === "saynext") {
+      setSelectIfOption(els.scenarioMode, "saynext");
+      renderScenarioLibrary();
+      showView("scenarios");
+      return;
+    }
+    if (action === "weak") {
+      openWeakPractice();
+      return;
+    }
+    if (action === "quiz") {
+      showView("quiz");
+      return;
+    }
+    if (action === "progress") {
+      showView("progress");
+    }
   }
 
   function renderWeakSpotLabel(item) {
